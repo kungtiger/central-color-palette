@@ -1,0 +1,655 @@
+$bar_bg: #FDFDFD;
+$border_color: #E5E5E5;
+$focus_color: #5B9DD9;
+$width: 600px;
+
+
+#kt_picker {
+    display: inline-block;
+    position: absolute;
+    z-index: 999999;
+    border: 1px solid #CCC;
+    background-color: #FFF;
+    -webkit-box-shadow: 0 3px 5px rgba(0,0,0,.2);
+    box-shadow: 0 3px 5px rgba(0,0,0,.2);
+    &.hidden, .alpha, .a-marker {
+        display: none;
+    }
+
+    * {
+        position: absolute;
+        cursor: crosshair;
+    }
+
+    &, .wheel {
+        width: 195px;
+        height: 195px;
+    }
+
+    .color, .overlay {
+        top: 47px;
+        left: 47px;
+        width: 101px;
+        height: 101px;
+    }
+
+    .wheel {
+        background: url(wheel.png) no-repeat;
+    }
+
+    .overlay {
+        background: url(mask.png) no-repeat;
+    }
+    .alpha {
+        top: 13px;
+        left: 201px;
+        width: 16px;
+        height: 168px;
+    }
+    .gradient {
+        width: 100%;
+        height: 100%;
+        background-image: url(alpha.png);
+    }
+
+    .marker {
+        width: 17px;
+        height: 17px;
+        margin: -8px 0 0 -8px;
+        overflow: hidden;
+        background: url(marker.png) no-repeat;
+    }
+    .a-marker {
+        left: 208px;
+    }
+}
+body.js #kt_color_grid.support-alpha #kt_picker {
+    width: 225px;
+    .alpha, .a-marker {
+        display: block;
+    }
+}
+
+
+
+input[name='kt_type'] {
+    display: none;
+}
+
+.metabox-holder {
+    display: inline-block;
+}
+.metabox-holder, .postbox-container {
+    width: 100%;
+}
+#kt_color_grid {
+    .postbox {
+        border-color: $border_color;
+    }
+    .hndle {
+        cursor: default;
+    }
+    p, .inside label {
+        font-size: 14px;
+    }
+    p {
+        padding: 0 1em;
+    }
+    h2 {
+        background-color: $bar_bg;
+        border-color: $border_color;
+    }
+    .inside {
+        padding: 0;
+        margin-bottom: 0;
+    }
+    select {
+        cursor: pointer;
+    }
+    label {
+        margin-right: .5em;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+    select + label {
+        margin-left: 1em;
+    }
+    .type-chooser .button-primary {
+        display: none;
+    }
+    p:last-child {
+        margin-bottom: 1em !important;
+    }
+    .switch-wrap {
+        padding: 8px 1em;
+        input {
+            margin-top: 0;
+        }
+    }
+}
+#kt_grid_metabox {
+    .button-group label.button {
+        margin-right: -1px;
+        float: left;
+        -webit-box-shadow: none;
+        box-shadow: none;
+    }
+    p[class$="-options"] {
+        display: none;
+    }
+}
+#kt_backup_metabox {
+    .devider {
+        padding-bottom: 1em;
+        border-bottom: 1px solid $border_color;
+    }
+}
+#kt_upload_label {
+    .spinner {
+        margin: 3px 8px 0 0;
+        display: none;
+        float: left;
+    }
+    .loading {
+        display: none;
+    }
+    &.disabled {
+        .label {
+            display: none;
+        }
+        .spinner {
+            display: inline-block;
+            visibility: visible;
+        }
+        .loading {
+            display: inline;
+        }
+    }
+}
+@each $type in (default palette rainbow block) {
+    #kt_type_#{$type}:checked ~ .meta-box-sortables .button[for="kt_type_#{$type}"] {
+        display: none;
+    }
+    #kt_type_#{$type}:checked ~ .meta-box-sortables .button-primary[for="kt_type_#{$type}"] {
+        display: inline-block;
+        position: relative;
+        z-index: 2;
+    }
+}
+#kt_type_default:checked ~ .meta-box-sortables #kt_visual_option {
+    display: none;
+}
+#kt_type_palette:checked ~ .meta-box-sortables .palette-options,
+#kt_type_rainbow:checked ~ .meta-box-sortables .rainbow-options,
+#kt_type_block:checked ~ .meta-box-sortables .block-options {
+    display: block;
+}
+#kt_elementor_hidden_wrap {
+    display: none;
+    padding: 0 1em;
+}
+#kt_elementor:checked ~ #kt_elementor_hidden_wrap {
+    display: inline-block;
+}
+#kt_clamp {
+    margin-top: -2px;
+}
+
+#kt_toolbar {
+    border: 1px solid $border_color;
+    border-style: solid none;
+    background-color: $bar_bg;
+}
+
+#kt_color_editor {
+    &:empty::before {
+        content: attr(data-empty);
+        display: inline-block;
+        width: 100%;
+        color: #666;
+        font-style: italic;
+        text-align: center;
+    }
+    .picker, .picker-placeholder {
+        width: 100%;
+        margin-left: -1px;
+    }
+    .picker, .button, input {
+        position: relative;
+        z-index: 1;
+    }
+    .picker {
+        background-color: #FFF;
+        border: 1px solid $border_color;
+        outline: none;
+        transition: border-color,box-shadow .1s linear;
+    }
+    .picker-placeholder {
+        border: 1px dashed #CCC;
+    }
+    .button .dashicons {
+        margin-top: 3px;
+    }
+    .button:hover, .button:focus, .button:active {
+        z-index: 2;
+    }
+    input:focus {
+        z-index: 4;
+    }
+    .color {
+        padding: 1px;
+    }
+    .sample {
+        overflow: hidden;
+        background-image: url(a.png);
+        &, span {
+            display: block;
+            float: left;
+            width: 100%;
+            height: 100%;
+        }
+        span {
+            transition: background-color .05s linear;
+        }
+    }
+    .hex {
+        font-family: monospace;
+        &:invalid {
+            background-color: #FEE;
+            border-color: #A00;
+            z-index: 3;
+        }
+    }
+    button.autoname {
+        display: none;
+    }
+    .remove:hover, .remove:focus, .remove:active {
+        color: #C00;
+    }
+    .alpha {
+        display: none;
+    }
+}
+
+#kt_color_grid.support-alpha #kt_color_editor {
+    .alpha {
+        display: block;
+    }
+    .sample span {
+        width: 50%;
+    }
+}
+
+body.js #kt_color_editor {
+    .picker:focus, .picker.grabbed {
+        border-color: $focus_color !important;
+        -webkit-box-shadow: 0 0 3px rgba(0,115,170,.8);
+        box-shadow: 0 0 3px rgba(0,115,170,.8);
+        z-index: 3;
+    }
+    .picker > .sample {
+        display: none;
+    }
+    button.autoname {
+        display: none;
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+        z-index: 6;
+    }
+    &.autoname .name.autoname  ~ .autoname {
+        display: inline-block;
+    }
+}
+body.no-js #kt_color_editor {
+    .picker:first-child .sort-up, .picker:last-child .sort-down {
+        display: none;
+    }
+}
+
+// desktop devices
+@media screen and (min-width: 783px) {
+    #kt_grid_metabox {
+        padding-bottom: 0;
+        select {
+            min-width: 60px;
+        }
+        input[type='radio'] {
+            margin-top: .4em;
+            margin-bottom: .4em;
+        }
+    }
+    #kt_palette_metabox {
+        .integration-column {
+            float: left;
+            width: 50%;
+        }
+        .integration-title {
+            color: #999;
+        }
+    }
+    #kt_toolbar, #kt_color_editor {
+        display: inline-block;
+    }
+    #kt_toolbar {
+        position: relative;
+        margin: 1em 0 -1px;
+        .button {
+            position: relative;
+            z-index: 1;
+            border: 1px solid transparent;
+            border-style: none solid;
+            border-radius: 0;
+            background: none;
+            padding: 8px;
+            height: 36px;
+            width: 36px;
+            text-decoration: none;
+            box-shadow: none;
+            text-shadow: none;
+            transition: color, background-color .080s linear;
+            &:hover, &:focus {
+                background-color: darken($bar_bg, 4%);
+                border-color: $border_color;
+                z-index: 2;
+            }
+            &:focus {
+                box-shadow: 0 0 0 1px #5b9dd9, 0 0 2px 1px rgba(30, 140, 190, .8);
+            }
+            &:active {
+                background-color: darken($bar_bg, 7%);
+                transform: none;
+                -webkit-transform: none;
+            }
+        }
+        #kt_add {
+            margin-left: 5px;
+        }
+    }
+    #kt_color_editor, .postbox, #kt_toolbar {
+        width: $width;
+    }
+    #kt_color_editor {
+        padding: 8px 0;
+        border: none;
+        &:empty::before {
+            line-height: 30px;
+            background-color: #FFF;
+        }
+        .picker, .picker-placeholder, &:empty::before {
+            display: inline-block;
+            float: left;
+            clear: both;
+            margin-bottom: -1px;
+            padding: 8px 0;
+        }
+        .picker-placeholder {
+            height: 26px;
+            margin: 1px 0 0 -1px;
+        }
+        .picker {
+            border-color: transparent $border_color;
+        }
+        input {
+            line-height: 20px;
+        }
+        .button, input, .picker > .sample {
+            float: left;
+            clear: none;
+            border-radius: 0;
+            margin: 0 -1px 0 0;
+        }
+        .button:not(:focus) {
+            box-shadow: none;
+        }
+        .color, .hex, .remove {
+            transition: all .1s linear;
+        }
+        .color {
+            width: 55px;
+        }
+        .sample {
+            width: 100%;
+            height: 24px;
+        }
+        .hex {
+            width: 100px;
+        }
+        .remove {
+            float: right;
+            margin-right: 0;
+        }
+    }
+    #kt_color_grid.support-alpha #kt_color_editor {
+        .alpha {
+            display: block;
+            width: 70px;
+        }
+        .name {
+            width: 277px;
+        }
+    }
+    body.no-js #kt_color_grid.support-alpha #kt_color_editor .name {
+        width: 222px;
+    }
+    body.js #kt_color_editor {
+        .color {
+            margin-left: 30px;
+        }
+        .remove {
+            margin-right: 30px;
+        }
+        .name {
+            width: 346px;
+        }
+        .picker {
+            cursor: move;
+            &:hover {
+                border-color: #999;
+                z-index: 2;
+            }
+        }
+        button.autoname {
+            margin: 0 0 0 -40px;
+        }
+        &.autoname .name.autoname {
+            padding-right: 40px;
+        }
+    }
+    body.no-js #kt_color_editor {
+        .remove {
+            margin-right: 13px;
+        }
+        .name {
+            width: 291px;
+        }
+        .sample {
+            width: 36px;
+            height: 26px;
+            margin-left: 13px;
+            border: 1px solid #DDD;
+            border-radius: 13px 0 0 13px;
+            box-shadow: inset 0 0 0 1px #FFF;
+        }
+        .sort {
+            display: inline-block;
+            margin: 0 12px;
+            font-size: 0;
+        }
+        .picker:first-child .sort-down {
+            margin-left: 41px;
+        }
+    }
+}
+
+// mobile devices
+@media screen and (max-width: 782px) {
+    #kt_color_editor, .postbox {
+        width: 100%;
+    }
+    .postbox {
+        margin: 1em 0;
+    }
+    #kt_grid_metabox {
+        select {
+            min-width: 80px;
+        }
+        input[type='radio'] {
+            margin-top: .5em;
+            margin-bottom: .5em;
+        }
+    }
+    #kt_toolbar {
+        padding: 2em 1em 1.5em;
+    }
+    #kt_color_editor {
+        $margin: 2.45%;
+        padding: 0;
+        margin: 1.5em 0 2em;
+        .picker, .picker-placeholder {
+            margin-bottom: 1em;
+            padding: 15px 0;
+        }
+        .picker-placeholder {
+            height: 157px;
+        }
+        input {
+            width: 95%;
+            margin-left: $margin;
+        }
+        .color {
+            width: 100px;
+            height: 40px;
+            border-radius: 3px 0 0 3px;
+            margin-left: $margin;
+        }
+        .sample {
+            width: 100%;
+            height: 100%;
+        }
+        .hex, .name {
+            margin-top: 1em;
+        }
+        .remove {
+            position: absolute;
+            top: 1em;
+            right: $margin;
+        }
+    }
+    body.js #kt_color_editor {
+        button.autoname {
+            margin: -7px 0 0 -52px;
+        }
+        &.autoname .name.autoname {
+            padding-right: 50px;
+        }
+    }
+}
+
+// right-to-left locales
+body.rtl {
+    #kt_picker .marker {
+        margin: -8px -8px 0 0;
+    }
+    #kt_grid_metabox {
+        label {
+            margin-left: .5em;
+            margin-right: 0;
+        }
+        select + label {
+            margin-left: .5em;
+            margin-right: 1em;
+        }
+        .button-group label.button {
+            margin-left: -1px;
+            float: right;
+        }
+    }
+    #kt_color_editor {
+        .picker, .picker-placeholder {
+            margin-right: -1px;
+        }
+    }
+}
+@media screen and (min-width: 783px) {
+    body.rtl #kt_color_editor {
+        .picker, .picker-placeholder, &:empty::before {
+            float: right;
+        }
+        .picker-placeholder {
+            margin: 1px -1px 0 0;
+        }
+        .button, input, .picker > .sample {
+            float: right;
+            margin: 0 0 0 -1px;
+        }
+        .remove {
+            float: left;
+            margin-left: 0;
+        }
+    }
+    body.rtl.js #kt_color_editor {
+        .color {
+            margin-left: -1px;
+            margin-right: 30px;
+        }
+        .remove {
+            margin-left: 30px;
+            margin-right: 0;
+        }
+        button.autoname {
+            margin: 0 -40px 0;
+        }
+        &.autoname .name.autoname {
+            padding-left: 40px;
+        }
+    }
+    body.rtl.no-js #kt_color_editor {
+        .remove {
+            margin-left: 13px;
+            margin-right: 0;
+        }
+        .sample {
+            margin-left: 0;
+            margin-right: 13px;
+            border-radius: 0 13px 13px 0;
+        }
+        .sort {
+            display: inline-block;
+            margin: 0 12px 0 -1px;
+        }
+        .picker:first-child .sort-down {
+            margin-right: 41px;
+        }
+    }
+}
+
+@media screen and (max-width: 782px) {
+    body.rtl #kt_color_editor {
+        $margin: 2.45%;
+        padding: 0;
+        input {
+            margin-right: $margin;
+        }
+        .color {
+            border-radius: 0 3px 3px 0;
+            margin-right: $margin;
+        }
+        .sample {
+            float: right;
+        }
+        .remove {
+            left: $margin;
+        }
+    }
+    body.rtl.js #kt_color_editor {
+        button.autoname {
+            margin: -7px 0 0 -52px;
+        }
+        &.autoname .name.autoname {
+            padding-right: 50px;
+        }
+    }
+}
