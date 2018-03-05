@@ -281,7 +281,7 @@
               $a.css('top', off + radius * (100 - this._alpha) / 50);
               background.hue(color._hsl[0]);
               $color.css('backgroundColor', background._hex);
-              $alpha.css('backgroundColor', background._hex);
+              $alpha.css('backgroundColor', this._hex);
           },
           coords = function (e) {
               var offset = $wheel.offset();
@@ -677,9 +677,9 @@
         });
 
         var _Action = _('kt_action');
-        $('#kt_import, #kt_upload').on('change', function () {
-            $('#' + this.id + '_label').addClass('disabled');
-            _Action.value = $(this).data('action');
+        $('#kt_upload').on('change', function () {
+            $('#kt_upload_label').addClass('disabled');
+            _Action.value = 'import-backup';
             this.form.submit();
         });
 

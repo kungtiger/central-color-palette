@@ -114,19 +114,10 @@ input[name='kt_type'] {
         user-select: none;
     }
     select + label {
-        margin-left: 1em;
-    }
-    .type-chooser .button-primary {
-        display: none;
+        margin-left: 1.33em;
     }
     p:last-child {
         margin-bottom: 1em !important;
-    }
-    .switch-wrap {
-        padding: 8px 1em;
-        input {
-            margin-top: 0;
-        }
     }
 }
 #kt_grid_metabox {
@@ -136,7 +127,21 @@ input[name='kt_type'] {
         -webit-box-shadow: none;
         box-shadow: none;
     }
-    p[class$="-options"] {
+    .type-chooser {
+        .button-primary {
+            position: relative;
+            display: none;
+            z-index: 2;
+        }
+        $radius: 4px;
+        .button:first-child, .button:nth-child(2) {
+            border-radius: $radius 0 0 $radius;
+        }
+        .button:nth-last-child(2), .button:last-child {
+            border-radius: 0 $radius $radius 0;
+        }
+    }
+    .grid-type-form {
         display: none;
     }
 }
@@ -168,30 +173,8 @@ input[name='kt_type'] {
         }
     }
 }
-@each $type in (default palette rainbow block) {
-    #kt_type_#{$type}:checked ~ .meta-box-sortables .button[for="kt_type_#{$type}"] {
-        display: none;
-    }
-    #kt_type_#{$type}:checked ~ .meta-box-sortables .button-primary[for="kt_type_#{$type}"] {
-        display: inline-block;
-        position: relative;
-        z-index: 2;
-    }
-}
-#kt_type_default:checked ~ .meta-box-sortables #kt_visual_option {
+#kt_grid_type_default:checked ~ .meta-box-sortables #kt_visual_option {
     display: none;
-}
-#kt_type_palette:checked ~ .meta-box-sortables .palette-options,
-#kt_type_rainbow:checked ~ .meta-box-sortables .rainbow-options,
-#kt_type_block:checked ~ .meta-box-sortables .block-options {
-    display: block;
-}
-#kt_elementor_hidden_wrap {
-    display: none;
-    padding: 0 1em;
-}
-#kt_elementor:checked ~ #kt_elementor_hidden_wrap {
-    display: inline-block;
 }
 #kt_clamp {
     margin-top: -2px;
@@ -201,6 +184,12 @@ input[name='kt_type'] {
     border: 1px solid $border_color;
     border-style: solid none;
     background-color: $bar_bg;
+    .switch-wrap {
+        padding: 8px 1em;
+        input {
+            margin-top: 0;
+        }
+    }
 }
 
 #kt_color_editor {
@@ -319,15 +308,6 @@ body.no-js #kt_color_editor {
         input[type='radio'] {
             margin-top: .4em;
             margin-bottom: .4em;
-        }
-    }
-    #kt_palette_metabox {
-        .integration-column {
-            float: left;
-            width: 50%;
-        }
-        .integration-title {
-            color: #999;
         }
     }
     #kt_toolbar, #kt_color_editor {

@@ -3,6 +3,7 @@ Contributors: kungtiger
 Requires at least: 3.5
 Tested up to: 4.9
 Stable tag: 1.11
+Requires PHP: 5.3
 Tags: color, customizer, editor, iris, palette, picker, tinymce
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -13,9 +14,14 @@ Take full control over color pickers of TinyMCE and the palette of the Theme Cus
 
 This plugin replaces the color picker for choosing a text or background color found inside the TinyMCE toolbar with a bigger and customizable color grid. The palette of the color picker found especially in the Theme Customizer can also be set through a central palette. You can define this central color palette through the settings menu. All plugins that make use of WordPress' color picker can benefit from this plugin as well.
 
-**New since version 1.10** Integration for [OceanWP](https://oceanwp.org/) added!
+**New since version 1.11** Integration for [OceanWP](https://oceanwp.org) added!
 
-If you would like to see this plugin in your language please feel free to contribute: [translate.wordpress.org/plugins/kt-tinymce-color-grid](https://translate.wordpress.org/projects/wp-plugins/kt-tinymce-color-grid).
+**Theme/Plugin Support**
+Central Color Palette supports these plugins and themes:
+
+- [Elementor](https://wordpress.org/plugins/elementor)
+- [GeneratePress Premium](https://generatepress.com/premium)
+- [OceanWP](https://oceanwp.org)
 
 == Installation ==
 
