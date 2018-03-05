@@ -41,6 +41,8 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         const ALPHA = 'kt_color_grid_alpha';
         const TINYMCE_ROWS = 5;
         const TINYMCE_COLS = 8;
+        CONST MIN_CLAMP = 4;
+        CONST MAX_CLAMP = 18;
         const DEFAULT_AUTONAME = true;
         const DEFAULT_SPREAD = 'even';
         const DEFAULT_CLAMP = 'column';
@@ -108,19 +110,20 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          * @return boolean
          */
         protected function support_alpha() {
-            static $result = null;
-            if ($result !== null) {
-                return $result;
+            static $support = null;
+            if ($support !== null) {
+                return $support;
             }
-            $result = false;
+            $support = false;
             $integrations = $this->get_integrations('id');
             foreach ($integrations as $id) {
-                if ($this->integration_enabled($id)) {
-                    $result = true;
+                $integration = $this->get_integration($id);
+                if ($integration && $integration['alpha']) {
+                    $support = true;
                     break;
                 }
             }
-            return $result;
+            return $support;
         }
 
         /**
@@ -174,7 +177,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                         delete_option('kt_color_grid_custom');
                         delete_option('kt_color_grid_sets');
                         $map = $this->render_rainbow();
-                        if ($map) {
+                        if (is_array($map)) {
                             update_option('kt_color_grid_map', $map);
                         }
                         break;
@@ -306,8 +309,18 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
 
         protected $registry = array();
 
+        /**
+         * Add an object to the registry
+         * @since 2.0
+         * @ignore
+         * @param mixed $group
+         * @param mixed $id
+         * @param mixed $object
+         * @return boolean
+         */
         protected function registry_add($group, $id, $object) {
-            if (sanitize_key($id) != $id) {
+            # compare value and type since null and false cast to empty strings
+            if (sanitize_key($id) !== $id) {
                 return false;
             }
             if ($this->registry_has($group, $id)) {
@@ -317,6 +330,14 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return true;
         }
 
+        /**
+         * Check if the registry has an object
+         * @since 2.0
+         * @ignore
+         * @param mixed $group
+         * @param mixed $id
+         * @return boolean
+         */
         protected function registry_has($group, $id) {
             if ($group && !isset($this->registry[$group])) {
                 $this->registry[$group] = array();
@@ -324,6 +345,15 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return $id && isset($this->registry[$group][$id]);
         }
 
+        /**
+         * Get an object from the registry
+         * @since 2.0
+         * @ignore
+         * @param mixed $group
+         * @param mixed $id
+         * @param mixed $default
+         * @return mixed
+         */
         protected function registry_get($group, $id = null, $default = null) {
             if (func_num_args() == 1) {
                 return isset($this->registry[$group]) ? $this->registry[$group] : array();
@@ -334,6 +364,14 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return $default;
         }
 
+        /**
+         * Remove an object from the registry
+         * @since 2.0
+         * @ignore
+         * @param mixed $group
+         * @param mixed $id
+         * @return boolean
+         */
         protected function registry_remove($group, $id) {
             if ($this->registry_has($group, $id)) {
                 unset($this->registry[$group][$id]);
@@ -342,6 +380,13 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return false;
         }
 
+        /**
+         * Add an integration
+         * @since 2.0
+         * @param mixed $id
+         * @param string|array $options
+         * @return boolean
+         */
         public function add_integration($id, $options = '') {
             if ($this->has_integration($id)) {
                 return false;
@@ -368,14 +413,32 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return $this->registry_add('integration', $id, $integration);
         }
 
+        /**
+         * Check for an integration
+         * @since 2.0
+         * @param mixed $id
+         * @return boolean
+         */
         public function has_integration($id) {
             return $this->registry_has('integration', $id);
         }
 
+        /**
+         * Get an integration
+         * @since 2.0
+         * @param mixed $id
+         * @return array|null
+         */
         public function get_integration($id) {
             return $this->registry_get('integration', $id);
         }
 
+        /**
+         * Get all integrations
+         * @since 2.0
+         * @param string $output Optional filter, defaults to 'all'
+         * @return array
+         */
         public function get_integrations($output = 'all') {
             $integrations = $this->registry_get('integration');
             switch ($output) {
@@ -390,14 +453,26 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return $integrations;
         }
 
+        /**
+         * Remove an integration
+         * @since 2.0
+         * @param mixed $id
+         * @return boolean
+         */
         public function remove_integration($id) {
             return $this->registry_remove('integration', $id);
         }
 
+        /**
+         * Check if an integration is enabled
+         * @since 2.0
+         * @param mixed $id
+         * @return boolean
+         */
         public function integration_enabled($id) {
             $integration = $this->get_integration($id);
             if (!$integration) {
-                return null;
+                return false;
             }
             $enabled = $integration['enabled'];
             if (is_callable($enabled)) {
@@ -406,6 +481,12 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return (bool) $enabled;
         }
 
+        /**
+         * Check if an integration is active
+         * @since 2.0
+         * @param mixed $id
+         * @return boolean
+         */
         public function integration_active($id) {
             if (!$this->has_integration($id)) {
                 return null;
@@ -414,7 +495,14 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return in_array($id, $integrate);
         }
 
-        public function add_grid_type($id, $options = null) {
+        /**
+         * Add a grid type
+         * @since 2.0
+         * @param mixed $id
+         * @param string|array $options
+         * @return boolean
+         */
+        public function add_grid_type($id, $options = '') {
             if ($this->has_grid_type($id)) {
                 return false;
             }
@@ -429,10 +517,22 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return $this->registry_add('grid_type', $id, $grid_type);
         }
 
+        /**
+         * Check for a grid type
+         * @since 2.0
+         * @param mixed $id
+         * @return boolean
+         */
         public function has_grid_type($id) {
             return $id == 'default' || $this->registry_has('grid_type', $id);
         }
 
+        /**
+         * Return default grid type
+         * @since 2.0
+         * @ignore
+         * @return array
+         */
         protected function get_default_grid_type() {
             return array(
                 'name' => __('Default', 'kt-tinymce-color-grid'),
@@ -440,6 +540,12 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             );
         }
 
+        /**
+         * Get grid type
+         * @since 2.0
+         * @param mixed $id
+         * @return array|null
+         */
         public function get_grid_type($id) {
             if ($id == 'default') {
                 return $this->get_default_grid_type();
@@ -447,6 +553,12 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return $this->registry_get('grid_type', $id);
         }
 
+        /**
+         * Get all grid types
+         * @since 2.0
+         * @param string $output Optional filter, defaults to 'all'
+         * @return array
+         */
         public function get_grid_types($output = 'all') {
             $types = array(
                 'default' => $this->get_default_grid_type(),
@@ -465,9 +577,14 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return $types;
         }
 
+        /**
+         * Get id of current grid type
+         * @since 2.0
+         * @return string
+         */
         public function get_current_grid_type() {
             $ids = array(
-                get_option(self::GRID_TYPE, self::DEFAULT_GRID_TYPE),
+                get_option(self::GRID_TYPE),
                 self::DEFAULT_GRID_TYPE,
             );
             foreach ($ids as $id) {
@@ -478,6 +595,11 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return 'default';
         }
 
+        /**
+         * Remove grid type
+         * @param mixed $id
+         * @return boolean
+         */
         public function remove_grid_type($id) {
             if ($id == 'default') {
                 return false;
@@ -485,6 +607,13 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return $this->registry_remove('grid_type', $id);
         }
 
+        /**
+         * Add luma correction
+         * @since 2.0
+         * @param mixed $id
+         * @param string|array $options
+         * @return boolean
+         */
         public function add_luma_type($id, $options = '') {
             if ($this->has_luma_type($id)) {
                 return false;
@@ -499,10 +628,22 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return $this->registry_add('luma_type', $id, $luma_type);
         }
 
+        /**
+         * Check for lumma correction
+         * @since 2.0
+         * @param mixed $id
+         * @return boolean
+         */
         public function has_luma_type($id) {
             return $id == 'linear' || $this->registry_has('luma_type', $id);
         }
 
+        /**
+         * Get (default) linear luma type
+         * @since 2.0
+         * @ignore
+         * @return array
+         */
         protected function get_linear_luma_type() {
             return array(
                 'name' => __('Linear', 'kt-tinymce-color-grid'),
@@ -510,6 +651,12 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             );
         }
 
+        /**
+         * Get luma correction
+         * @since 2.0
+         * @param mixed $id
+         * @return array|null
+         */
         public function get_luma_type($id) {
             if ($id == 'linear') {
                 return $this->get_linear_luma_type();
@@ -517,6 +664,12 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return $this->registry_get('luma_type', $id);
         }
 
+        /**
+         * Get all luma corrections
+         * @since 2.0
+         * @param string $output Optional filter, defaults to 'all'
+         * @return array
+         */
         public function get_luma_types($output = 'all') {
             $types = array(
                 'linear' => $this->get_linear_luma_type(),
@@ -535,9 +688,14 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return $types;
         }
 
+        /**
+         * Get id of current luma correction
+         * Since 2.0
+         * @return string
+         */
         public function get_current_luma_type() {
             $ids = array(
-                get_option(self::LUMA, self::DEFAULT_LUMA),
+                get_option(self::LUMA),
                 self::DEFAULT_LUMA,
             );
             foreach ($ids as $id) {
@@ -548,6 +706,12 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return 'linear';
         }
 
+        /**
+         * Remove luma correction
+         * @since 2.0
+         * @param mixed $id
+         * @return boolean
+         */
         public function remove_luma_type($id) {
             if ($id == 'linear') {
                 return false;
@@ -556,7 +720,8 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         }
 
         /**
-         *
+         * Add default grid types: palette, rainbow and block
+         * @since 2.0
          * @ignore
          */
         public function default_grid_types() {
@@ -578,7 +743,8 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         }
 
         /**
-         *
+         * Add default luma corrections: sine, cubic and natural
+         * @since 2.0
          * @ignore
          */
         public function default_luma_types() {
@@ -596,6 +762,11 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             ));
         }
 
+        /**
+         * Add default integrations: elemetor, generatepress and oceanwp
+         * @since 2.0
+         * @ignore
+         */
         public function default_integrations() {
             $this->add_integration('elementor', array(
                 'name' => __('Elementor', 'kt-tinymce-color-grid'),
@@ -617,15 +788,30 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             ));
         }
 
+        /**
+         * Add filters an actions for integration with Elementor
+         * @since 2.0
+         * @ignore
+         */
         public function integrate_elementor() {
             add_filter('elementor/editor/localize_settings', array($this, 'elementor_integration'));
             add_action('elementor/editor/after_enqueue_scripts', array($this, 'elementor_styles'));
         }
 
+        /**
+         * Add filter for integration with GeneratePress
+         * @since 2.0
+         * @ignore
+         */
         public function integrate_generatepress() {
             add_filter('generate_default_color_palettes', array($this, 'generatepress_integration'));
         }
 
+        /**
+         * Add filter for integration with OceanWP
+         * @since 2.0
+         * @ignore
+         */
         public function integrate_oceanwp() {
             add_filter('ocean_default_color_palettes', array($this, 'oceanwp_integration'));
         }
@@ -651,7 +837,9 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 }
                 $_palette[] = $color;
             }
-            $_palette = array_pad($_palette, $options['min'], $options['pad']);
+            if ($options['min'] > 0) {
+                $_palette = array_pad($_palette, $options['min'], $options['pad']);
+            }
             return apply_filters('kt/central_palette/get_palette', $_palette, $palette, $options);
         }
 
@@ -730,7 +918,6 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             if (!$palette) {
                 return;
             }
-            $printed = true;
             $colors = array();
             foreach ($palette as $set) {
                 $colors[] = '"' . esc_js($set['color']) . '"';
@@ -970,7 +1157,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
                 $name = '';
                 $palette[] = compact('color', 'alpha', 'name');
             } else if ($l > 0) {
-                $i = $this->preg_get('~remove-(\d+)~', $action);
+                $i = (int) $this->preg_get('~remove-(\d+)~', $action);
                 if ($i !== null && key_exists($i, $palette)) {
                     array_splice($palette, $i, 1);
                 }
@@ -1007,7 +1194,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             $this->set_option('kt_clamp', $this->clamp, self::CLAMP, self::DEFAULT_CLAMP);
 
             $clamps = intval($this->get_request('kt_clamps'));
-            if ($clamps < 4 || $clamps > 18) {
+            if ($clamps < self::MIN_CLAMP || $clamps > self::MAX_CLAMP) {
                 $clamps = self::DEFAULT_CLAMPS;
             }
             update_option(self::CLAMPS, $clamps);
@@ -1695,7 +1882,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
          * @ignore
          */
         protected function print_settings_error() {
-            $feedback = '';
+            $feedback = $error = '';
             if (isset($_GET['kt-import-backup-error'])) {
                 $error = $_GET['kt-import-backup-error'];
                 $import_errors = array(
@@ -1742,7 +1929,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
          */
         protected function print_settings_css() {
             $grid_types = $this->get_grid_types('id');
-            if (!$grid_types) {
+            if (empty($grid_types)) {
                 return;
             }
 
@@ -1808,9 +1995,10 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             $_clamp = get_option(self::CLAMP, self::DEFAULT_CLAMP);
             $_clamps = get_option(self::CLAMPS, self::DEFAULT_CLAMPS);
             $clamp = $this->selectbox('kt_clamp', $clamp, $_clamp);
-            $clamps = "<input type='number' id='kt_clamps' name='kt_clamps' min='4' max='18' step='1' value='$_clamps'/>";
+            $clamps = "<input type='number' id='kt_clamps' name='kt_clamps' min='" . self::MIN_CLAMP . "' max='" . self::MAX_CLAMP . "' step='1' value='$_clamps'/>";
             $spread = array(
                 'even' => esc_html__('Spread colors evenly', 'kt-tinymce-color-grid'),
+                /* translators: %1 selectbox for row or column, %2 input for number */
                 'odd' => sprintf(__('Fill each %1$s with %2$s colors', 'kt-tinymce-color-grid'), $clamp, $clamps),
             );
             foreach ($spread as $value => $label) {
@@ -2245,9 +2433,8 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
         /**
          * Convert a RGB vector to a HEX string
          * @since 1.9
-         * @ignore
-         * @param array $rgb RGB vector [red, gree, blue] of [0..1]
-         * @return string
+         * @param array $rgb RGB vector [red, gree, blue] of floats [0..1]
+         * @return string|false Returns false if any of the components is outside [0..1]
          */
         public function rgb2hex($rgb) {
             foreach ($rgb as $i => $x) {
@@ -2259,6 +2446,12 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             return implode('', $rgb);
         }
 
+        /**
+         * Convert a HEX string and a alpha value into RGBA() notation
+         * @param string $hex Hexadecimal color
+         * @param int $alpha Alpha value [0..100]
+         * @return string
+         */
         public function hex2rgba($hex, $alpha) {
             $color = $this->sanitize_color($hex);
             $hex = str_split(substr($color, 1), 2);

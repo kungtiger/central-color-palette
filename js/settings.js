@@ -1,3 +1,5 @@
+/** global: postboxes pagenow kt_Color*/
+
 /*
  * kt_Color
  * Simple Color Class for RGB, HEX and HSL conversion
@@ -71,8 +73,9 @@
                      }
                      return '#' + hex;
                  }
+             default:
+                 return false;
          }
-         return false;
      },
      rgb = ['red', 'green', 'blue'],
      hsl = ['hue', 'saturation', 'lightness'],
@@ -84,27 +87,27 @@
          this._alpha = 100;
          this._event = {};
          this.hex(hex, alpha);
+     },
+     update = function (color, type) {
+         switch (type) {
+             case 'rgb':
+                 rgb2dec(color);
+                 dec2hex(color);
+                 rgb2hsl(color);
+                 break;
+             case 'hsl':
+                 hsl2rgb(color);
+                 rgb2dec(color);
+                 dec2hex(color);
+                 break;
+             case 'hex':
+                 hex2dec(color);
+                 dec2rgb(color);
+                 rgb2hsl(color);
+                 break;
+         }
+         color.trigger('change');
      };
-    update = function (color, type) {
-        switch (type) {
-            case 'rgb':
-                rgb2dec(color);
-                dec2hex(color);
-                rgb2hsl(color);
-                break;
-            case 'hsl':
-                hsl2rgb(color);
-                rgb2dec(color);
-                dec2hex(color);
-                break;
-            case 'hex':
-                hex2dec(color);
-                dec2rgb(color);
-                rgb2hsl(color);
-                break;
-        }
-        color.trigger('change');
-    };
     kt_Color.prototype.rgb = function (rgb, alpha) {
         if (rgb == null) {
             return this._rgb;
@@ -327,7 +330,7 @@
               dragging = false;
           },
           mouse = {mousemove: mousemove, mouseup: mouseup};
-         if (String(navigator.appVersion).match(/MSIE [0-6]\./)) {
+         if (String(window.navigator.appVersion).match(/MSIE [0-6]\./)) {
              $container.children().each(fixAlpha);
          }
          color.on('change', updateUI);
@@ -412,13 +415,11 @@
                  $this.siblings('.hex').val(hex);
                  $this.siblings('.alpha').val(this._alpha);
                  rgba = this.rgba();
-                 console.log('kt_Color: ' + rgba);
              } else if ($color) {
                  $this = $color;
                  hex = $this.siblings('.hex').val();
                  render.hex(hex, $this.siblings('.alpha').val());
                  rgba = render.rgba();
-                 console.log('$color: ' + rgba);
              } else {
                  return;
              }
@@ -599,8 +600,9 @@
              return false;
          },
          autoRevert = function (e) {
+             var $hex;
              if (e.type == 'focusin') {
-                 var $hex = $(this);
+                 $hex = $(this);
                  if (sanitizeHex(this.value)) {
                      $hex.data('lastValue', this.value);
                  }
@@ -611,7 +613,7 @@
                  }
              } else if (!sanitizeHex(this.value)) {
                  hidePicker();
-                 var $hex = $(this);
+                 $hex = $(this);
                  $hex.data('autoFill', setTimeout(function () {
                      $hex.val($hex.data('lastvalue'));
                      autoName(this);
