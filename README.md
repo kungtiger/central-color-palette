@@ -2,7 +2,7 @@
 **Contributors:** kungtiger  
 **Requires at least:** 3.5  
 **Tested up to:** 4.9  
-**Stable tag:** 1.11  
+**Stable tag:** 2.0  
 **Tags:** color, customizer, editor, iris, palette, picker, tinymce  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
@@ -13,11 +13,6 @@ Take full control over color pickers of TinyMCE and the palette of the Theme Cus
 ## Description 
 
 This plugin replaces the color picker for choosing a text or background color found inside the TinyMCE toolbar with a bigger and customizable color grid. The palette of the color picker found especially in the Theme Customizer can also be set through a central palette. You can define this central color palette through the settings menu. All plugins that make use of WordPress' color picker can benefit from this plugin as well.
-
-**New since version 1.11** Integration for [OceanWP](https://oceanwp.org/) added!
-
-If you would like to see this plugin in your language please feel free to contribute: [translate.wordpress.org/plugins/kt-tinymce-color-grid](https://translate.wordpress.org/projects/wp-plugins/kt-tinymce-color-grid).
-
 
 ## Installation 
 
@@ -47,10 +42,13 @@ This plugin should work out of the box with a standard installation of WordPress
 
 ### Questions? Concerns? Feature Request? 
 
-Please [contact me](http://wordpress.org/support/plugin/kt-tinymce-color-grid) and we'll see what we can do
+Please [open an issue](https://github.com/kungtiger/central-color-palette/issues) or [contribute on 
+GitHub](https://github.com/kungtiger/central-color-palette/tree/master)
 
 
 ## Changelog 
+
+### 2.0
 
 
 ### 1.11 
@@ -159,102 +157,6 @@ Fixes an error when using more than one TinyMCE
 ### 1.1 
 - Stylesheet gets enqueued only on pages with a TinyMCE
 - Reduced overhead
-
-
-### 1.0 
-Initial release.
-
-
-## Upgrade Notice 
-
-
-### 1.11 
-Adds color integration for OceanWP
-
-
-### 1.10 
-Adds color integration for Elementor and GeneratePress Premium
-
-
-### 1.9.3 
-Fixes fatal error when updating from an older version than 1.6
-
-
-### 1.9.2 
-Corrects some palette import errors
-
-
-### 1.9.1 
-Fixes fatal error on network installations of WordPress
-
-
-### 1.9 
-Automatic name generation and palette import of various third party formats
-
-
-### 1.8 
-- All settings and the palette can now be exported and imported
-- Added new grid type: only central palette for TinyMCE
-
-
-### 1.7.2 
-- Fixes JavaScript bug and conflict with Poedit
-
-
-### 1.7.1 
-Corrects some spelling mistakes
-
-
-### 1.7 
-Theme Customizer support added and color grid is now adjustable
-
-
-### 1.6.1 
-Fixed hidden colors after defining more than 13 colors
-
-
-### 1.6 
-Mayor useability improvements
-
-
-### 1.5 
-Added clean uninstall routine
-
-
-### 1.4.4 
-Fixes a possible JavaScript error
-
-
-### 1.4.3 
-Update for WordPress 4.4
-
-
-### 1.4.2 
-Repairs header already send error
-
-
-### 1.4.1 
-Fixes a broken script
-
-
-### 1.4 
-Improves settings page and fixes security leaks
-
-
-### 1.3.1 
-Minor changes for WordPress 4.3
-
-
-### 1.3 
-Added support for custom persistent colors
-
-
-### 1.2 
-Fixes an error when using more than one TinyMCE
-
-
-### 1.1 
-Just a few performance improvements
 
 
 ### 1.0 
