@@ -4,7 +4,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit(403);
 }
 
-foreach (array('customizer', 'block_size', 'block_axis', 'elementor', 'gp', 'oceanwp', 'palette', 'version', 'spread', 'clamps', 'blocks', 'alpha', 'visual', 'clamp', 'luma', 'cols', 'rows', 'type', 'map') as $key) {
+foreach (array('customizer', 'block_size', 'block_axis', 'integrate', 'palette', 'version', 'spread', 'clamps', 'blocks', 'alpha', 'visual', 'clamp', 'luma', 'cols', 'rows', 'type', 'map') as $key) {
     delete_option("kt_color_grid_{$key}");
 }
 
