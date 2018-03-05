@@ -1,4 +1,4 @@
-/** global: postboxes pagenow kt_Color*/
+/** global: postboxes, pagenow, kt_Color*/
 
 /*
  * kt_Color
