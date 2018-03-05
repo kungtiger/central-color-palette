@@ -2,7 +2,7 @@
 Contributors: kungtiger
 Requires at least: 3.5
 Tested up to: 4.9
-Stable tag: 1.11
+Stable tag: 2.0
 Requires PHP: 5.3
 Tags: color, customizer, editor, iris, palette, picker, tinymce
 License: GPLv2 or later
