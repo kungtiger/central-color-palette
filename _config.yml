@@ -2,8 +2,8 @@
 # Site
 
 title: Central Color Palette
-url: "https://kungtiger.github.io/central-color-palette"
-baseurl: ""
+url: "https://kungtiger.github.io"
+baseurl: "/central-color-palette"
 
 # Values for the jekyll-seo-tag gem (https://github.com/jekyll/jekyll-seo-tag)
 logo: /siteicon.png
