@@ -1,1 +1,4 @@
-nbproject/
+_site/
+.sass-cache/
+.jekyll-metadata
+/nbproject/private/

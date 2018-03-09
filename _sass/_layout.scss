@@ -1,0 +1,199 @@
+/*----scroll bars----*/
+::-webkit-scrollbar,
+::-webkit-scrollbar:horizontal,
+::-webkit-scrollbar:vertical {
+    width: 12px;
+    height: 10px;
+}
+::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-thumb:horizontal {
+    background-color: lighten($sidebar_bg, 10%);
+    border: none;
+}
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:horizontal:hover {
+    background-color: lighten($sidebar_bg, 15%);
+}
+::-webkit-scrollbar-track-piece,
+::-webkit-scrollbar-track-piece:horizontal {
+    background-color: $sidebar_bg;
+    border: none;
+}
+::-webkit-scrollbar-corner {
+    background-color: #000;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    overflow: hidden;
+    @include display-flex();
+    background-color: $body_bg;
+    color: $body_fg;
+    font-family: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    &, * {
+        box-sizing: border-box;
+    }
+}
+#sidebar, main {
+    height: 100%;
+}
+#sidebar {
+    width: $sidebar_width;
+    background-color: $sidebar_bg;
+    color: $sidebar_fg;
+    @include display-flex();
+    @include flex-direction(column);
+    a {
+        color: $sidebar_fg;
+        text-decoration: none;
+    }
+}
+#menu {
+    display: none;
+}
+h1, #search, aside, nav {
+    width: 100%;
+}
+h1 {
+    $padding: ($header_height - $logo_size) / 2;
+
+    margin: 0;
+    padding: 0;
+    height: $header_height;
+    font-size: 19px;
+    background-color: $header_bg;
+    a {
+        height: 100%;
+        @include display-flex();
+        @include flex-direction(row);
+        @include align-items(center);
+    }
+    .icon {
+        padding: $padding;
+        font-size: $logo_size;
+        color: #FFF;
+    }
+}
+h1, aside {
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.1);
+}
+#search {
+    margin: 0 16px 20px;
+    position: relative;
+}
+#q {
+    -webkit-appearance: none;
+    font-size: 15px;
+    margin-top: 16px;
+    border-radius: 12px;
+    text-indent: 0!important;
+    background-color: #242730;
+    transition: all .5s;
+    outline: none;
+    width: $sidebar_width - 38px;
+    height: 38px;
+    padding: 6px 12px;
+    border: 1px solid #2b2e39;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+
+    line-height: 1.42857143;
+    color: #7e879c;
+    display: block;
+
+    &:focus {
+        background-color: #FFF;
+    }
+}
+aside, #search {
+    display: block;
+    height: $header_height;
+    @include flex(0 0 $header_height);
+}
+aside {
+    $padding: 13px;
+    background-color: $bar_bg;
+    a {
+        display: inline-block;
+        height: 100%;
+        padding: $padding;
+        line-height: $header_height - 2 * $padding;
+        vertical-align: middle;
+        text-align: center;
+        font-size: 16px;
+        text-decoration: none;
+        transition: background-color .2s ease;
+        color: $body_fg;
+        &:first-child {
+            margin-left: 20px;
+        }
+        &:hover {
+            background-color: darken($bar_bg, 6%);
+        }
+    }
+    span {
+        display: inline-block;
+    }
+    .icon {
+        font-size: 1.2em;
+        padding-left: .2em;
+    }
+    .label {
+        font-weight: 700;
+    }
+}
+nav, #content {
+    @include flex(1);
+}
+nav, main {
+    overflow-y: auto;
+}
+nav {
+    ul {
+        list-style: none;
+        margin: 0 0 1em;
+        padding: 0;
+        &.monospaced {
+            font-family: "Fira Mono", Menlo, Monaco, Consolas, "Courier New", monospace;
+            font-size: 14px;
+        }
+    }
+    a {
+        display: block;
+        width: 100%;
+        padding: 7px 0 7px 12px;
+        line-height: 22px;
+    }
+    a:hover, a:active, .current a {
+        background-color: lighten($sidebar_bg, 5%);
+    }
+    .badge {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        color: #fff;
+        font-size: 11px;
+        line-height: 21px;
+        text-indent: 0 !important;
+        text-align: center;
+        border-radius: 3px;
+    }
+    $badges: ((action #6D4D71), (filter #3E6F43), (method #2E57A8));
+    @each $badge, $color in $badges {
+        .badge-#{$badge} {
+            background-color: $color;
+        }
+    }
+}
+#content {
+    @include display-flex();
+    @include flex-direction(column);
+}
+main {
+    @include flex(1);
+    padding: 0 30px 50px;
+}

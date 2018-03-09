@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% seo %}
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Merriweather:400,400italic,700,700italic|Open+Sans:400,400italic,600,600italic,700,700italic|Inconsolata:400,700">
+    <link rel="stylesheet" href="{{ site.baseurl }}/css/main.css">
+
+    <link rel="fluid-icon" href="https://github.com/fluidicon.png" title="GitHub">
+    <link rel="mask-icon" href="https://assets-cdn.github.com/pinned-octocat.svg" color="#000000">
+    <link rel="icon" type="image/x-icon" class="js-site-favicon" href="https://assets-cdn.github.com/favicon.ico">
+
+    <!--<script type="text/javascript" src="{{ site.baseurl }}/js/jquery-3.3.1.slim.min.js"></script>-->
+  </head>
+
+  <body>
+    <section id="sidebar">
+      <h1>
+        <a href="{{ site.baseurl }}/">
+          <span class="icon icon-github"></span>
+          <span class="site-title">{{ site.title }}</span>
+        </a>
+        <button type="button" id="menu"></button>
+      </h1>
+
+      <form id="search" action="{{ site.baseurl }}/search/" method="get">
+        <input type="text" name="q" id="q" placeholder="Search">
+        <input type="submit" value="Search" style="display: none;">
+      </form>
+
+      <nav>
+        <ul>
+          <li class="nav-item top-level{% if page.url == '/' %} current{% endif %}">
+            {% assign home = site.html_pages | where: 'url', '/' | first %}
+            <a href="{{ site.baseurl }}/">{{ home.title }}</a>
+          </li>
+          {% assign items = site.guides | sort: "order" %}
+          {% for item in items %}
+          <li class="{% if item.url == page.url %}current{% endif %}">
+            <a href="{{ site.baseurl }}{{ item.url }}">{% if item.navigation %}{{ item.navigation }}{% else %}{{ item.title }}{% endif %}</a>
+          </li>
+          {% endfor %}
+        </ul>
+
+        <ul class="monospaced">
+          {% assign grouped = site.docs | group_by:"priority" | sort:"name" %}
+          {% for group in grouped %}
+          {% assign items = group.items | sort: "title" %}
+          {% for item in items %}
+          <li class="{% if item.url == page.url %}current{% endif %}">
+            <a href="{{ site.baseurl }}{{ item.url }}">
+              {% assign char = item.category | slice:0 | upcase %}
+              {% if item.category %}<span class="badge badge-{{ item.category }}">{{ char }}</span>{% endif %}
+              <span class="label">{% if item.navigation %}{{ item.navigation }}{% else %}{{ item.title }}{% endif %}</span>
+            </a>
+          </li>
+          {% endfor %}
+          {% endfor %}
+        </ul>
+
+        <ul>
+          <li class="{% if page.url == '/changelog/' %}current{% endif %}">
+            {% assign changelog = site.html_pages | where: 'url', '/changelog/' | first %}
+            <a href="{{ site.baseurl }}/changelog/">{{ changelog.title }}</a>
+          </li>
+        </ul>
+      </nav>
+    </section>
+
+    <section id="content">
+      <aside>
+        <a href="{{ site.wordpress.plugin_url }}">
+          <span class="icon icon-wordpress"></span>
+          <span class="label">Plugin Page</span>
+        </a>
+        <a href="{{ site.wordpress.download }}">
+          <span class="icon icon-download"></span>
+          <span class="label">Download</span>
+        </a>
+        <a href="{{ site.github.repository_url }}">
+          <span class="icon icon-github"></span>
+          <span class="label">GitHub</span>
+        </a>
+        <a href="{{ site.github.issues_url }}">
+          <span class="icon icon-issue"></span>
+          <span class="label">Issues</span>
+        </a>
+      </aside>
+
+      <main>
+        <header class="page-header">
+          <h2>{{ page.title }}</h2>
+        </header>
+        <article class="content">
+          {% if page.category %}
+          {% include {{ page.category }}.html %}
+          {% else %}
+          {{ content }}
+          {% endif %}
+        </article>
+      </main>
+    </section>
+
+    <script>
+      document.getElementById("open-nav").addEventListener("click", function () {
+          document.body.classList.toggle("nav-open");
+      });
+    </script>
+  </body>
+</html>
