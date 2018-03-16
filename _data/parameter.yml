@@ -1,0 +1,6 @@
+instance:
+  type: kt_Central_Palette
+  description: The current `kt_Central_Palette` instance
+id:
+  type: string
+  description: Unique identifier

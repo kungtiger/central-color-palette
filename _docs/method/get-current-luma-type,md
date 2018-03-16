@@ -1,0 +1,6 @@
+---
+title: get_current_luma_type
+category: method
+synopsis: Returns the id of the currently active luma type
+returns: string
+---

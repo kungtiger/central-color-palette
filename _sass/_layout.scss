@@ -23,6 +23,17 @@
     background-color: #000;
 }
 
+// Text Selection
+::selection {
+    color: $sidebar_fg;
+    background-color: $sidebar_bg;
+}
+
+.monospaced, .code {
+    font-size: .82em;
+    font-family: "Fira Mono", Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
 html, body {
     height: 100%;
     margin: 0;
@@ -117,7 +128,7 @@ aside, #search {
 aside {
     $padding: 13px;
     background-color: $bar_bg;
-    a {
+    .links a {
         display: inline-block;
         height: 100%;
         padding: $padding;
@@ -146,6 +157,13 @@ aside {
         font-weight: 700;
     }
 }
+#meta {
+    padding: 5px 10px;
+    float: right;
+    font-size: 12px;
+    line-height: 18px;
+}
+
 nav, #content {
     @include flex(1);
 }
@@ -158,18 +176,20 @@ nav {
         margin: 0 0 1em;
         padding: 0;
         &.monospaced {
-            font-family: "Fira Mono", Menlo, Monaco, Consolas, "Courier New", monospace;
             font-size: 14px;
         }
+    }
+    li {
+        position: relative;
     }
     a {
         display: block;
         width: 100%;
-        padding: 7px 0 7px 12px;
+        padding: 7px 0 7px 15px;
         line-height: 22px;
     }
     a:hover, a:active, .current a {
-        background-color: lighten($sidebar_bg, 5%);
+        background-color: lighten($sidebar_bg, 7%);
     }
     .badge {
         display: inline-block;
@@ -182,18 +202,68 @@ nav {
         text-align: center;
         border-radius: 3px;
     }
-    $badges: ((action #6D4D71), (filter #3E6F43), (method #2E57A8));
-    @each $badge, $color in $badges {
-        .badge-#{$badge} {
-            background-color: $color;
-        }
-    }
 }
 #content {
     @include display-flex();
     @include flex-direction(column);
 }
+
 main {
     @include flex(1);
-    padding: 0 30px 50px;
+    padding: 0 50px 50px;
+    h2 {
+        font-weight: 700;
+        font-size: 22px;
+        .badge {
+            margin-left: .3em;
+        }
+    }
+    h3, h4 {
+        margin-top: 2em;
+    }
+    h4 {
+        margin-bottom: .5em;
+    }
+    .badge {
+        font-size: 12px;
+        letter-spacing: .07em;
+        color: #fff;
+        padding: 3px 4px;
+        border-radius: 3px;
+        margin: -2px 5px 0 0;
+        font-weight: 400;
+        line-height: 16px;
+    }
+}
+
+main {
+    position: relative;
+}
+
+figure.highlight {
+    margin: 1em 0;
+}
+
+#badges {
+    display: inline-block;
+    position: absolute;
+    right: 30px;
+    top: 20px;
+}
+
+$badges: (
+(action #6D4D71), (filter #3E6F43),
+(method #2E57A8), (static #9AAEC3),
+(since #90A524),
+(php #8892BF), (required #b23));
+@each $badge, $color in $badges {
+    .badge-#{$badge} {
+        background-color: $color;
+    }
+}
+
+ul.see-also {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1em;
 }

@@ -1,0 +1,30 @@
+{%if include.returns %}
+
+{%if include.returns.first %}
+{%assign size = include.returns.size %}
+{%else%}
+{%assign size = 1 %}
+{%endif%}
+
+<table class="returns{%if size > 1%} zebra{%endif%}">
+  <caption>Return Value{%if size > 1%}s{%endif%}</caption>
+  <tr>
+    <th>Type</th>
+    <th>Description</th>
+  </tr>
+  {%if include.returns.first %}
+  {%for return in include.returns %}
+  <tr>
+    <td class="code">{{return.type}}</td>
+    <td>{{return.description}}</td>
+  </tr>
+  {%endfor%}
+  {%else%}
+  <tr>
+    <td class="code">{{include.returns}}</td>
+    <td></td>
+  </tr>
+  {%endif%}
+</table>
+
+{%endif%}

@@ -1,1 +1,49 @@
-method
+<h2>{{page.title}}
+  <span class="badge badge-method">method</span>
+</h2>
+
+<section id="badges">
+  {% if page.static %}
+  <span class="badge badge-static">static</span>
+  {%endif%}
+  {% if page.script %}
+  <span class="badge badge-{{page.script}}">{{page.script}}</span>
+  {%endif%}
+  <span class="badge badge-since">since v{{page.since}}</span>
+</section>
+
+{%if page.synopsis %}
+{{page.synopsis | markdownify}}
+{%endif%}
+
+{% highlight php %}
+{{page.namespace}}::{%unless page.static%}instance()->{%endunless%}{%if page.signature%}{{page.signature}}{%else%}{{page.title}}(){%endif%}
+{%endhighlight%}
+
+{%if page.arguments.first%}
+<table class="parameters{%if page.arguments.size > 1 %} zebra{%endif%}">
+  <caption>Method Parameter{%if page.arguments.size > 1 %}s{%endif%}</caption>
+  <tr>
+    <th>Name</th>
+    <th>Type</th>
+    <th>Default</th>
+    <th>Description</th>
+  </tr>
+  {%for argument in page.arguments%}
+  <tr>
+    <td class="code">${{argument.name}}</td>
+    <td>{{argument.type|split:"|"|array_to_sentence_string:'or'}}</td>
+    {%if argument.default %}<td class="code">{{argument.default}}{%else%}<td><span class="badge badge-required">required</span>{%endif%}</td>
+    <td>{{argument.description}}</td>
+  </tr>
+  {%endfor%}
+</table>
+{%endif%}
+
+{%include returns.html returns=page.returns %}
+{%include options.html data=page.options %}
+{%include callbacks.html data=page.callbacks %}
+
+{{content}}
+
+{% include see.html data=page.see %}

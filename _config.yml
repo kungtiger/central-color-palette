@@ -7,15 +7,11 @@ baseurl: "/central-color-palette"
 
 # Values for the jekyll-seo-tag gem (https://github.com/jekyll/jekyll-seo-tag)
 logo: /siteicon.png
-description: Product documentation template for Jekyll.
-author:
-  name:
-  email:
-  twitter: # twitter username without the @ symbol
+description: Documentation for Central Color Palette WordPress plugin.
 social:
-  name: Edition Template
+  name: Central Color Palette
   links:
-    - https://github.com/CloudCannon/edition-jekyll-template
+    - https://github.com/kungtiger/central-color-palette
 
 # -----
 # Build
@@ -23,9 +19,10 @@ social:
 timezone: Etc/UTC
 repository: kungtiger/central-color-palette
 permalink: pretty
+searchable: true
 
 wordpress:
-    version: 1.11
+    plugin_version: 1.11
     plugin_url: https://wordpress.org/plugins/kt-tinymce-color-grid
     download_url: https://downloads.wordpress.org/plugin/kt-tinymce-color-grid.1.11.zip
 
@@ -38,6 +35,7 @@ exclude:
   - Gemfile.lock
   - README.md
   - LICENCE
+  - nbproject/
 
 collections:
   guides:
@@ -60,7 +58,10 @@ defaults:
       path: ""
       type: "docs"
     values:
+      script: php
       priority: 10
+      since: "2.0"
+      namespace: "kt_Central_Palette"
       seo:
         type: Article
       _comments:
@@ -78,9 +79,5 @@ defaults:
       _comments:
         type: Marks the impact of this release
 
-# -----------
-# CloudCannon
-
-types:
-  - minor
-  - major
+kramdown:
+  entity_output: as_input

@@ -1,11 +1,9 @@
 ---
 title: init
 category: action
-excerpt: Fires after the settings page has been initialized
-arguments: {
-    $instance: {
-        type: "kt_Central_Color_Palette",
-        description: "The instance"
-    }
-}
+signature: kt/central_palette/init
+synopsis: Fires after the settings page has been initialized
+arguments:
+  -
+    name: instance
 ---

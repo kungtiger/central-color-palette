@@ -10,7 +10,15 @@
     <link rel="mask-icon" href="https://assets-cdn.github.com/pinned-octocat.svg" color="#000000">
     <link rel="icon" type="image/x-icon" class="js-site-favicon" href="https://assets-cdn.github.com/favicon.ico">
 
-    <!--<script type="text/javascript" src="{{ site.baseurl }}/js/jquery-3.3.1.slim.min.js"></script>-->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.1.6/lunr.min.js"></script>
+    <script type="text/javascript">
+var jekyll = {
+url: {{ site.url | jsonify }},
+ baseurl: {{ site.baseurl | jsonify }}
+};
+    </script>
+    <script type="text/javascript" src="{{ site.baseurl }}/js/main.js"></script>
   </head>
 
   <body>
@@ -23,10 +31,12 @@
         <button type="button" id="menu"></button>
       </h1>
 
+      {%if site.searchable %}
       <form id="search" action="{{ site.baseurl }}/search/" method="get">
         <input type="text" name="q" id="q" placeholder="Search">
         <input type="submit" value="Search" style="display: none;">
       </form>
+      {%endif%}
 
       <nav>
         <ul>
@@ -42,9 +52,9 @@
           {% endfor %}
         </ul>
 
+        {% assign grouped = site.docs | group_by:"priority" | sort:"name" %}
+        {% for group in grouped %}
         <ul class="monospaced">
-          {% assign grouped = site.docs | group_by:"priority" | sort:"name" %}
-          {% for group in grouped %}
           {% assign items = group.items | sort: "title" %}
           {% for item in items %}
           <li class="{% if item.url == page.url %}current{% endif %}">
@@ -55,8 +65,8 @@
             </a>
           </li>
           {% endfor %}
-          {% endfor %}
         </ul>
+        {% endfor %}
 
         <ul>
           <li class="{% if page.url == '/changelog/' %}current{% endif %}">
@@ -69,42 +79,37 @@
 
     <section id="content">
       <aside>
-        <a href="{{ site.wordpress.plugin_url }}">
-          <span class="icon icon-wordpress"></span>
-          <span class="label">Plugin Page</span>
-        </a>
-        <a href="{{ site.wordpress.download }}">
-          <span class="icon icon-download"></span>
-          <span class="label">Download</span>
-        </a>
-        <a href="{{ site.github.repository_url }}">
-          <span class="icon icon-github"></span>
-          <span class="label">GitHub</span>
-        </a>
-        <a href="{{ site.github.issues_url }}">
-          <span class="icon icon-issue"></span>
-          <span class="label">Issues</span>
-        </a>
+        <span class="links">
+          <a href="{{ site.wordpress.plugin_url }}">
+            <span class="icon icon-wordpress"></span>
+            <span class="label">Plugin Page</span>
+          </a>
+          <a href="{{ site.wordpress.download_url }}">
+            <span class="icon icon-download"></span>
+            <span class="label">Download</span>
+          </a>
+          <a href="{{ site.github.repository_url }}">
+            <span class="icon icon-github"></span>
+            <span class="label">GitHub</span>
+          </a>
+          <a href="{{ site.github.issues_url }}">
+            <span class="icon icon-issue"></span>
+            <span class="label">Issues</span>
+          </a>
+        </span>
+        <span id="meta">
+          Last updated {{site.time | date_to_string}}
+        </span>
       </aside>
 
       <main>
-        <header class="page-header">
-          <h2>{{ page.title }}</h2>
-        </header>
-        <article class="content">
-          {% if page.category %}
-          {% include {{ page.category }}.html %}
-          {% else %}
-          {{ content }}
-          {% endif %}
-        </article>
+        {% if page.category %}
+        {% include {{ page.category }}.html %}
+        {% else %}
+        <h2>{{page.title}}</h2>
+        {{ content }}
+        {% endif %}
       </main>
     </section>
-
-    <script>
-      document.getElementById("open-nav").addEventListener("click", function () {
-          document.body.classList.toggle("nav-open");
-      });
-    </script>
   </body>
 </html>

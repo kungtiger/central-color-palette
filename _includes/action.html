@@ -1,1 +1,24 @@
-action
+<h2>{{page.title}}
+  <span class="badge badge-action">action</span>
+</h2>
+
+<section id="badges">
+  {% if page.script %}
+  <span class="badge badge-{{page.script}}">{{page.script}}</span>
+  {%endif%}
+  <span class="badge badge-since">since v{{page.since}}</span>
+</section>
+
+{%if page.synopsis %}
+{{page.synopsis | markdownify}}
+{%endif%}
+
+{% highlight php %}
+add_action( "{{page.signature}}", "my_callback" );
+{%endhighlight%}
+
+{% include arguments.html data=page.arguments %}
+
+{{content}}
+
+{% include see.html data=page.see %}
