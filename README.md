@@ -51,6 +51,11 @@ GitHub](https://github.com/kungtiger/central-color-palette/tree/master)
 ### 2.0
 
 
+### 1.12
+- Added support for [Beaver Builder](https://www.wpbeaverbuilder.com)
+- Fixed some bugs and typos
+
+
 ### 1.11 
 - Added support for [OceanWP](https://oceanwp.org)
 - Fixed alpha picker for Chrome
