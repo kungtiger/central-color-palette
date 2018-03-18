@@ -10,6 +10,4 @@ arguments:
     description: The backup data
   -
     name: instance
-    type: kt_Central_Palette
-    description: The kt_Central_Palette instance
 ---

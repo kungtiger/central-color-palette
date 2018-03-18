@@ -20,25 +20,7 @@
 {{page.namespace}}::{%unless page.static%}instance()->{%endunless%}{%if page.signature%}{{page.signature}}{%else%}{{page.title}}(){%endif%}
 {%endhighlight%}
 
-{%if page.arguments.first%}
-<table class="parameters{%if page.arguments.size > 1 %} zebra{%endif%}">
-  <caption>Method Parameter{%if page.arguments.size > 1 %}s{%endif%}</caption>
-  <tr>
-    <th>Name</th>
-    <th>Type</th>
-    <th>Default</th>
-    <th>Description</th>
-  </tr>
-  {%for argument in page.arguments%}
-  <tr>
-    <td class="code">${{argument.name}}</td>
-    <td>{{argument.type|split:"|"|array_to_sentence_string:'or'}}</td>
-    {%if argument.default %}<td class="code">{{argument.default}}{%else%}<td><span class="badge badge-required">required</span>{%endif%}</td>
-    <td>{{argument.description}}</td>
-  </tr>
-  {%endfor%}
-</table>
-{%endif%}
+{%include arguments.html arguments=page.arguments name="Method Parameter" default=true %}
 
 {%include returns.html returns=page.returns %}
 {%include options.html data=page.options %}

@@ -1,17 +1,24 @@
-{%if include.data.first%}
-<table class="hook-arguments{%if include.data.size > 1%} zebra{%endif%}">
-  <caption>{{include.caption|default:"Callback Arguments"}}</caption>
+{%if include.arguments.first%}
+<h4>{{include.name | default:"Callback Arguments"}}</h4>
+<table class="hook-arguments{%if include.arguments.size > 1%} zebra{%endif%}">
   <tr>
     <th>Argument</th>
     <th>Type</th>
+    {%if include.default %}
+    <th>Default</th>
+    {%endif%}
     <th>Description</th>
   </tr>
-  {%for data in include.data %}
-  {%assign data_type = data.type | default: page.data.parameter[data.name] %}
+  {%for argument in include.arguments %}
+  {%assign parameter = site.data.parameter[argument.name] %}
+  {%assign type = argument.type | default: parameter.type | default: "mixed" %}
+  {%assign default = argument.default | default: parameter.default %}
+  {%assign description = argument.description | default: parameter.description %}
   <tr>
-    <td class="code">${{data.name}}</td>
-    <td>{{data_type | split: "|" | array_to_sentence_string: 'or'}}</td>
-    <td>{{data.description | markdownify | remove: '<p>' | remove: '</p>'}}</td>
+    <td class="code">${{argument.name}}</td>
+    <td>{{type | split: "|" |  array_to_sentence_string: 'or'}}</td>
+    {%if include.default %}<td>{%if default %}{{default}}{%else%}<span class="badge badge-required">required</span>{%endif%}</td>{%endif%}
+    <td>{{description | markdownify | remove: '<p>' | remove: '</p>'}}</td>
   </tr>
   {%endfor%}
 </table>

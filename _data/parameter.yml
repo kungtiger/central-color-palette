@@ -4,3 +4,7 @@ instance:
 id:
   type: string
   description: Unique identifier
+options:
+  type: "array|string"
+  default: '""'
+  description: See further down for details

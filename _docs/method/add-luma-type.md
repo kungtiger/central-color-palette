@@ -12,13 +12,8 @@ returns:
 arguments:
   -
     name: id
-    type: string
-    description: unique identifier
   -
     name: options
-    type: string|array
-    default: '""'
-    description: See further down for available options
 
 options:
   -

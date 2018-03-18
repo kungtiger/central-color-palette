@@ -9,11 +9,11 @@
   </tr>
   {%for argument in callback.arguments %}
   {%assign parameter = site.data.parameter[argument.name] %}
-  {%assign data_type = argument.type | default: parameter.type | default: "mixed" %}
+  {%assign type = argument.type | default: parameter.type | default: "mixed" %}
   {%assign description = argument.description | default: parameter.description %}
   <tr>
     <td class="code">${{argument.name}}</td>
-    <td>{{data_type | split: "|" |  array_to_sentence_string: 'or'}}</td>
+    <td>{{type | split: "|" |  array_to_sentence_string: 'or'}}</td>
     <td>{{description | markdownify | remove: '<p>' | remove: '</p>'}}</td>
   </tr>
   {%endfor%}

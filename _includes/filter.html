@@ -17,7 +17,7 @@
 add_filter( "{{page.signature}}", "my_callback" );
 {%endhighlight%}
 
-{% include arguments.html data=page.arguments %}
+{% include arguments.html arguments=page.arguments %}
 
 {{content}}
 
