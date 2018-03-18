@@ -1,4 +1,4 @@
-/** global: postboxes, pagenow, kt_Color*/
+/** global: postboxes pagenow kt_Color*/
 
 /*
  * kt_Color
@@ -681,7 +681,7 @@
         var _Action = _('kt_action');
         $('#kt_upload').on('change', function () {
             $('#kt_upload_label').addClass('disabled');
-            _Action.value = 'import-backup';
+            _Action.value = 'import';
             this.form.submit();
         });
 
