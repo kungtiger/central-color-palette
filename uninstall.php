@@ -1,10 +1,11 @@
 <?php
 
 if (!defined('WP_UNINSTALL_PLUGIN')) {
+    header('HTTP/1.0 403 Forbidden');
     exit(403);
 }
 
-foreach (array('integrate','customizer', 'block_size', 'block_axis', 'palette', 'version', 'spread', 'clamps', 'blocks', 'alpha', 'visual', 'clamp', 'luma', 'cols', 'rows', 'type', 'map') as $key) {
+foreach (array('integrate', 'customizer', 'block_size', 'block_axis', 'palette', 'version', 'spread', 'clamps', 'blocks', 'alpha', 'visual', 'clamp', 'luma', 'cols', 'rows', 'type', 'map') as $key) {
     delete_option("kt_color_grid_{$key}");
 }
 

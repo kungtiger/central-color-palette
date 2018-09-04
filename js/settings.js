@@ -446,18 +446,24 @@
          toggleAutoname = function () {
              $(this).toggleClass('autoname', this.value == '');
          },
+         getAutoName = function (hex) {
+             var name = ntc.name(hex)[1];
+             if (name.substr(0, 14) == 'Invalid Color:') {
+                 name = '';
+             }
+             return name;
+         },
          autoName = function (field) {
+             var $picker = $(field).closest('.picker');
+             if (!$picker.length) {
+                 return;
+             }
+
+             var hex = $picker.children('.hex').val();
+             var name = getAutoName(hex);
+             $picker.children('.suggestion').val(name);
              if (_('kt_autoname').checked) {
-                 var $picker = $(field).closest('.picker');
-                 var $name = $picker.children('.name');
-                 if ($name.hasClass('autoname')) {
-                     var hex = $picker.children('.hex').val();
-                     var name = ntc.name(hex)[1];
-                     if (name.substr(0, 14) == 'Invalid Color:') {
-                         name = '';
-                     }
-                     $name.val(name);
-                 }
+                 $picker.children('.name.autoname').val(name);
              }
          },
          initSort = function (e) {
@@ -643,7 +649,7 @@
         var $document = $(document),
          $Picker = $('#kt_picker'),
          $current_color = null, $focus = $(),
-         $Checkboxes = $('#kt_visual, #kt_customizer'),
+         $Checkboxes = $('#kt_integrate_tinymce, #kt_integrate_customizer'),
          $Type = $('input[name="kt_type"]'),
          _Palette = _('kt_type_palette'),
          $ColorEditor = $('#kt_color_editor'),
@@ -653,35 +659,64 @@
         color.on('change', updateUI);
 
         $Checkboxes.on('change', function () {
-            if (this.id == 'kt_visual' && !this.checked && _Palette.checked) {
+            if (this.id == 'kt_integrate_tinymce' && !this.checked && _Palette.checked) {
                 $('#kt_type_default').prop('checked', true).trigger('change');
             }
         });
 
         $Type.on('change', function () {
             if (this.value == 'palette') {
-                _('kt_visual').checked = true;
+                _('kt_integrate_tinymce').checked = true;
             }
-            $('#kt_customizer').trigger('change');
+            $('#kt_integrate_customizer').trigger('change');
         });
         $('#kt_clamp, #kt_clamps').on('mousedown', function () {
             _('kt_spread_odd').checked = true;
         });
 
-        var MONTH_IN_SECONDS = 108e4 * 13;
-        var _Export = _('kt_action_export');
-        var $ExportParts = $('#kt_export').children('input');
-        $('#kt_export').on('change', 'input[type="checkbox"]', function () {
-            _Export.disabled = $ExportParts.filter(':checked').length == 0;
-            if (window.wpCookies) {
-                window.wpCookies.set('kt_export_' + this.value, this.checked ? 1 : 0, MONTH_IN_SECONDS);
+        var typeIdx = $Type.index($Type.filter(':checked'));
+        $('#kt_grid_type').on('click', function () {
+            if (++typeIdx == $Type.length) {
+                typeIdx = 0;
             }
+            $Type.eq(typeIdx).prop('checked', true);
         });
 
-        var _Action = _('kt_action');
+        var MONTH_IN_SECONDS = 108e4 * 13;
+        if (window.wpCookies) {
+            $('#kt_backup_metabox').on('change', 'input', function () {
+                var value = this.value;
+                if (this.type == 'checkbox') {
+                    value = this.checked ? 1 : 0;
+                }
+                window.wpCookies.set(this.name, value, MONTH_IN_SECONDS);
+            });
+        }
+
+        var renderCSSPreview = function () {
+            $('#kt_export_css_preview pre').text(cssPreviewTemplate({
+                prefix: _('kt_export_css_prefix').value,
+                suffix: _('kt_export_css_suffix').value,
+                alpha: _('kt_export_css_alpha').checked ? 1 : 0
+            }));
+        };
+        var cssPreviewTemplate = wp.template('kt_export_css_preview');
+        $('#kt_export_format_css_form').on('change', 'input', renderCSSPreview);
+        renderCSSPreview();
+
+        var renderSCSSPreview = function () {
+            $('#kt_export_scss_preview pre').text(scssPreviewTemplate({
+                prefix: _('kt_export_scss_prefix').value,
+                suffix: _('kt_export_scss_suffix').value
+            }));
+        };
+        var scssPreviewTemplate = wp.template('kt_export_scss_preview');
+        $('#kt_export_format_scss-vars_form').on('change', 'input', renderSCSSPreview);
+        renderSCSSPreview();
+
         $('#kt_upload').on('change', function () {
             $('#kt_upload_label').addClass('disabled');
-            _Action.value = 'import';
+            _('kt_action').value = 'import';
             this.form.submit();
         });
 
@@ -739,7 +774,13 @@
              stop: function (e, ui) {
                  ui.item.css('zIndex', '').trigger('focus');
              }
-         });
+         }).find('.ntc_name').each(function () {
+            this.value = getAutoName($(this).siblings('.hex').val());
+        });
+
+        $(window).on('beforeunload', function (e) {
+            // get form data an compare for changes
+        });
 
         postboxes.add_postbox_toggles(pagenow);
     });

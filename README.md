@@ -2,7 +2,7 @@
 **Contributors:** kungtiger  
 **Requires at least:** 3.5  
 **Tested up to:** 4.9  
-**Stable tag:** 2.0  
+**Stable tag:** 1.12.5
 **Tags:** color, customizer, editor, iris, palette, picker, tinymce  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
@@ -17,6 +17,19 @@ This plugin replaces the color picker for choosing a text or background color fo
 ## Installation 
 
 This plugin should work out of the box with a standard installation of WordPress.
+
+## Theme/Plugin Support
+Central Color Palette supports these plugins and themes:
+
+- [Astra Theme](https://wpastra.com)
+- [Beaver Builder](https://www.wpbeaverbuilder.com)
+- [Elementor](https://wordpress.org/plugins/elementor)
+- [GeneratePress Premium](https://generatepress.com/premium)
+- [OceanWP](https://oceanwp.org)
+- [Page Builder Framework](https://wp-pagebuilderframework.com)
+
+## Privacy Policy
+This plugin does not collect or use any private data.
 
 **WordPress' Plugin Search**
 
@@ -42,13 +55,36 @@ This plugin should work out of the box with a standard installation of WordPress
 
 ### Questions? Concerns? Feature Request? 
 
-Please [open an issue](https://github.com/kungtiger/central-color-palette/issues) or [contribute on 
+Please [contact me](http://wordpress.org/support/plugin/kt-tinymce-color-grid) and we'll see what we can do
+**or**
+[open an issue](https://github.com/kungtiger/central-color-palette/issues) or [contribute on 
 GitHub](https://github.com/kungtiger/central-color-palette/tree/master)
 
 
 ## Changelog 
 
-### 2.0
+### 1.12.5
+Fixed faulty output on palette save
+
+
+### 1.12.4
+Fixed unstable integration with Elementor
+
+
+### 1.12.3
+- Fixed dynamic styles interfering with other parts of TinyMCE
+- Added credits to changelog of all those who contributed
+- Added GDPR notice to readme
+
+
+### 1.12.2
+- Clarified what "Add to Customizer" does
+- Added support for [Astra Theme](https://wpastra.com)
+- Added support for [Page Builder Framework](https://wp-pagebuilderframework.com)
+
+
+### 1.12.1
+Fixed a bug where opacity values are displayed instead of color names
 
 
 ### 1.12

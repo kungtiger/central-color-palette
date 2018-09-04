@@ -27,7 +27,6 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         const ROWS = 'kt_color_grid_rows';
         const COLS = 'kt_color_grid_cols';
         const LUMA = 'kt_color_grid_luma';
-        const VISUAL = 'kt_color_grid_visual';
         const BLOCKS = 'kt_color_grid_blocks';
         const SIZE = 'kt_color_grid_block_size';
         const AXIS = 'kt_color_grid_block_axis';
@@ -36,14 +35,13 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         const CLAMP = 'kt_color_grid_clamp';
         const CLAMPS = 'kt_color_grid_clamps';
         const PALETTE = 'kt_color_grid_palette';
-        const CUSTOMIZER = 'kt_color_grid_customizer';
         const ACTIVE_VERSION = 'kt_color_grid_version';
         const AUTONAME = 'kt_color_grid_autoname';
         const ALPHA = 'kt_color_grid_alpha';
         const TINYMCE_ROWS = 5;
         const TINYMCE_COLS = 8;
-        CONST MIN_CLAMP = 4;
-        CONST MAX_CLAMP = 18;
+        const MIN_CLAMP = 4;
+        const MAX_CLAMP = 18;
         const DEFAULT_AUTONAME = true;
         const DEFAULT_SPREAD = 'even';
         const DEFAULT_CLAMP = 'column';
@@ -57,6 +55,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         const DEFAULT_LUMA = 'natural';
         const MAX_FILE_SIZE = 256000;
 
+        protected $registry = array();
         protected $blocks = array(4, 6);
         protected $sizes = array(4, 5, 6);
         protected $spread = array('even', 'odd');
@@ -95,7 +94,13 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             add_action('admin_menu', array($this, 'add_settings_page'));
             add_filter('plugin_action_links', array($this, 'add_action_link'), 10, 2);
 
+            register_activation_hook(__FILE__, array($this, 'plugin_activation'));
+
             $this->update_plugin();
+        }
+
+        public function plugin_activation() {
+            $this->render_map();
         }
 
         /**
@@ -103,19 +108,22 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          * Check if any integration needs an alpha channel
          * @since 2.0
          * @ignore
-         * @staticvar null|boolean $result
          * @return boolean
          */
         protected function support_alpha() {
-            static $support = null;
-            if ($support !== null) {
-                return $support;
-            }
             $support = false;
-            $integrations = $this->get_integrations('id');
-            foreach ($integrations as $id) {
-                $integration = $this->get_integration($id);
-                if ($integration && $integration['alpha']) {
+            $integrations = $this->get_integrations();
+            foreach ($integrations as $int) {
+                $fn = $int['alpha'];
+                if (is_callable($fn)) {
+                    $args = isset($int['args']) ? $int['args'] : $this;
+                    if ($this->call($fn, $args)) {
+                        $support = true;
+                        break;
+                    }
+                }
+
+                if ($fn) {
                     $support = true;
                     break;
                 }
@@ -201,16 +209,27 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                     case 1100:
                     case 1110:
                     case '1.11':
+                    case '1.12':
+                        $version = '1.12.1';
+
+                        # fixes misplaced color names
+                        $this->render_map();
+                        break;
+
+                    case '1.12.1':
+                    case '1.12.2':
+                    case '1.12.3':
+                    case '1.12.4':
+                    case '1.12.5':
                         $version = '2.0';
 
                         $palette = get_option('kt_color_grid_palette', array());
                         $_palette = array();
                         foreach ($palette as $set) {
                             list($color, $alpha, $name) = $set;
-                            if (substr($color, 0, 1) != '#') {
-                                $color = "#$color";
-                            }
-                            $_palette[] = compact('color', 'alpha', 'name');
+                            $color = '#' . ltrim($color, '#');
+                            $slug = $this->get_color_slug($color, $name);
+                            $_palette[] = compact('color', 'alpha', 'name', 'slug');
                         }
                         update_option('kt_color_grid_palette', $_palette);
 
@@ -219,20 +238,23 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                         $columns += $mono + $extra;
                         update_option('kt_color_grid_map', compact('map', 'rows', 'columns'));
 
-                        $i9n = array();
+                        # all integrations are now stored in one option
+                        $integrations = array();
                         $map = array(
+                            'visual' => 'tinymce',
+                            'customizer' => 'customizer',
                             'elementor' => 'elementor',
                             'gp' => 'generatepress',
-                            'oceanwp' => 'oceanwp'
+                            'oceanwp' => 'oceanwp',
                         );
-                        foreach ($map as $option => $id) {
+                        foreach ($map as $option => $integration) {
                             $option = "kt_color_grid_{$option}";
                             if (get_option($option)) {
-                                $i9n[] = $id;
+                                $integrations[] = $integration;
                             }
                             delete_option($option);
                         }
-                        update_option('kt_color_grid_i9n', $i9n);
+                        update_option('kt_color_grid_integrate', $integrations);
                         break;
 
                     default:
@@ -274,37 +296,23 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          * @ignore
          */
         public function init_plugin() {
-            if (get_option(self::GRID_TYPE, self::DEFAULT_GRID_TYPE) != 'default') {
-                add_filter('tiny_mce_before_init', array($this, 'tinymce_integration'));
-                add_action('after_wp_tiny_mce', array($this, 'print_tinymce_style'));
-            }
-
-            if (get_option(self::CUSTOMIZER)) {
-                $fn = array($this, 'iris_integration');
-                add_action('admin_print_scripts', $fn);
-                add_action('admin_print_footer_scripts', $fn);
-                add_action('customize_controls_print_scripts', $fn);
-                add_action('customize_controls_print_footer_scripts', $fn);
-            }
-
             add_action(self::HOOK . 'init_integrations', array($this, 'default_integrations'));
 
             /**
-             *
+             * Add integrations
              * @since 2.0
              * @param kt_Central_Palette $instance
              */
             do_action(self::HOOK . 'init_integrations', $this);
 
-            $integrations = $this->get_integrations('palette');
-            foreach ($integrations as $id => $fn) {
-                if ($this->integration_active($id)) {
-                    call_user_func($fn, $this, $id);
+            $integrations = $this->get_integrations();
+            foreach ($integrations as $id => $integration) {
+                if ($this->is_integration_active($id) && $integration['integrate']) {
+                    $args = isset($integration['args']) ? $integration['args'] : $this;
+                    $this->call($integration['integrate'], $args);
                 }
             }
         }
-
-        protected $registry = array();
 
         /**
          * Add an object to the registry
@@ -388,24 +396,21 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             if ($this->has_integration($id)) {
                 return false;
             }
-            $integration = wp_parse_args($options);
+            $integration = wp_parse_args($options, array(
+                'enabled' => true,
+                'alpha' => false,
+                'checkbox' => true,
+                'form' => null,
+                '_internal' => false,
+            ));
 
-            if (!isset($integration['palette']) || !is_callable($integration['palette'])) {
-                return false;
-            }
-
-            if (!isset($integration['enabled'])) {
-                $integration['enabled'] = true;
+            if (!isset($integration['integrate']) || !is_callable($integration['integrate'])) {
+                $integration['integrate'] = false;
             }
 
             if (!isset($integration['name']) || !$integration['name']) {
                 $integration['name'] = ucfirst($id);
             }
-
-            if (!isset($integration['alpha'])) {
-                $integration['alpha'] = false;
-            }
-            $integration['alpha'] = (bool) $integration['alpha'];
 
             return $this->registry_add('integration', $id, $integration);
         }
@@ -440,7 +445,9 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             $integrations = $this->registry_get('integration');
             switch ($output) {
                 case 'id': return array_keys($integrations);
-                case 'palette':
+                case 'name':
+                case 'alpha':
+                case 'integrate':
                     $map = array();
                     foreach ($integrations as $id => $integration) {
                         $map[$id] = $integration[$output];
@@ -457,6 +464,10 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          * @return boolean
          */
         public function remove_integration($id) {
+            $integration = $this->get_integration($id);
+            if (!$integration || $integration['_internal']) {
+                return false;
+            }
             return $this->registry_remove('integration', $id);
         }
 
@@ -466,14 +477,16 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          * @param mixed $id
          * @return boolean
          */
-        public function integration_enabled($id) {
+        public function is_integration_enabled($id) {
             $integration = $this->get_integration($id);
             if (!$integration) {
                 return false;
             }
+
             $enabled = $integration['enabled'];
             if (is_callable($enabled)) {
-                $enabled = call_user_func($enabled, $this, $id);
+                $args = isset($integration['args']) ? $integration['args'] : $this;
+                $enabled = $this->call($enabled, $args);
             }
             return (bool) $enabled;
         }
@@ -484,12 +497,58 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          * @param mixed $id
          * @return boolean
          */
-        public function integration_active($id) {
-            if (!$this->has_integration($id)) {
+        public function is_integration_active($id) {
+            $integration = $this->get_integration($id);
+            if (!$integration) {
                 return null;
             }
+
+            if (!$integration['integrate']) {
+                return $this->is_integration_active('customizer');
+            }
+
             $integrate = get_option(self::INTEGRATE, array());
             return in_array($id, $integrate);
+        }
+
+        public function is_native_integration($id) {
+            $integration = $this->get_integration($id);
+            if (!$integration) {
+                return null;
+            }
+            return $integration['integrate'] === false;
+        }
+
+        /**
+         * Activate an integration
+         * @since 2.0
+         * @param mixed $id
+         * @return boolean
+         */
+        public function activate_integration($id) {
+            if ($this->is_integration_active($id)) {
+                return false;
+            }
+            $integrations = get_option(self::INTEGRATE, array());
+            $integrations[] = $id;
+            update_option(self::INTEGRATE, $integrations);
+            return true;
+        }
+
+        /**
+         * Deactivate an integration
+         * @since 2.0
+         * @param mixed $id
+         * @return boolean
+         */
+        public function deactivate_integration($id) {
+            if (!$this->is_integration_active($id)) {
+                return false;
+            }
+            $integrations = get_option(self::INTEGRATE, array());
+            $integrations = array_diff($integrations, array($id));
+            update_option(self::INTEGRATE, $integrations);
+            return true;
         }
 
         /**
@@ -626,7 +685,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         }
 
         /**
-         * Check for lumma correction
+         * Check for luma correction
          * @since 2.0
          * @param mixed $id
          * @return boolean
@@ -716,6 +775,113 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             return $this->registry_remove('luma_type', $id);
         }
 
+        public function add_export_format($id, $options = '') {
+            if ($this->has_export_format($id)) {
+                return false;
+            }
+            $format = wp_parse_args($options, array(
+                'form' => false,
+                'prefix' => '',
+            ));
+
+            if (!isset($format['export']) || !is_callable($format['export'])) {
+                return false;
+            }
+
+            if (!isset($format['extension']) || !$format['extension']) {
+                $format['extension'] = $id;
+            }
+
+            if (!isset($format['name']) || !$format['name']) {
+                $format['name'] = ucfirst($id);
+            }
+
+            return $this->registry_add('export', $id, $format);
+        }
+
+        public function has_export_format($id) {
+            return $this->registry_has('export', $id);
+        }
+
+        public function get_export_format($id) {
+            return $this->registry_get('export', $id);
+        }
+
+        public function get_export_formats($output = 'all') {
+            $formats = $this->registry_get('export');
+            switch ($output) {
+                case 'id': return array_keys($formats);
+                case 'name':
+                case 'form':
+                case 'export':
+                    $map = array();
+                    foreach ($formats as $id => $type) {
+                        $map[$id] = $type[$output];
+                    }
+                    return $map;
+            }
+            return $formats;
+        }
+
+        public function remove_export_format($id) {
+            if ($id == 'base64') {
+                return false;
+            }
+            return $this->registry_remove('export', $id);
+        }
+
+        public function add_import_format($id, $options = '') {
+            if ($this->has_export_format($id)) {
+                return false;
+            }
+            $format = wp_parse_args($options, array(
+            ));
+
+            if (!isset($format['parser']) || !is_callable($format['parser'])) {
+                return false;
+            }
+
+            if (!isset($format['extension']) || !$format['extension']) {
+                $format['extension'] = $id;
+            }
+
+            if (!isset($format['name']) || !$format['name']) {
+                $format['name'] = ucfirst($id);
+            }
+
+            return $this->registry_add('export', $id, $format);
+        }
+
+        public function has_import_format($id) {
+            return $this->registry_has('import', $id);
+        }
+
+        public function get_import_format($id) {
+            return $this->registry_get('import', $id);
+        }
+
+        public function get_import_formats($output = 'all') {
+            $formats = $this->registry_get('import');
+            switch ($output) {
+                case 'id': return array_keys($formats);
+                case 'name':
+                case 'parser':
+                    $map = array();
+                    foreach ($formats as $id => $type) {
+                        $map[$id] = $type[$output];
+                    }
+                    return $map;
+            }
+            return $formats;
+        }
+
+        public function remove_import_format($id) {
+            if ($id == 'bak') {
+                return false;
+            }
+            return $this->registry_remove('import', $id);
+        }
+
         /**
          * Add default grid types: palette, rainbow and block
          * @since 2.0
@@ -760,68 +926,182 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         }
 
         /**
-         * Add default integrations: elemetor, generatepress and oceanwp
+         * Add default integrations
          * @since 2.0
          * @ignore
          */
         public function default_integrations() {
+            $this->add_integration('tinymce', array(
+                'label' => __('Add to Visual Editor', 'kt-tinymce-color-grid'),
+                'enabled' => true,
+                'integrate' => array($this, 'integrate_tinymce'),
+                'alpha' => false,
+                '_internal' => true,
+            ));
+            $this->add_integration('customizer', array(
+                'label' => array($this, 'print_customizer_label'),
+                'enabled' => true,
+                'integrate' => array($this, 'integrate_customizer'),
+                'alpha' => false,
+                '_internal' => true,
+            ));
+            /*$this->add_integration('gutenberg', array(
+                'label' => array($this, 'print_gutenberg_label'),
+                'enabled' => array($this, 'support_gutenberg'),
+                'integrate' => array($this, 'integrate_gutenberg'),
+                'alpha' => false,
+                '_internal' => true,
+            ));*/
             $this->add_integration('elementor', array(
                 'name' => __('Elementor', 'kt-tinymce-color-grid'),
-                'enabled' => defined('ELEMENTOR_VERSION'),
-                'palette' => array($this, 'integrate_elementor'),
+                'enabled' => array($this, 'support_elementor'),
+                'integrate' => array($this, 'integrate_elementor'),
                 'alpha' => false,
             ));
             $this->add_integration('generatepress', array(
                 'name' => __('GeneratePress Premium', 'kt-tinymce-color-grid'),
-                'enabled' => defined('GP_PREMIUM_VERSION'),
-                'palette' => array($this, 'integrate_generatepress'),
+                'enabled' => array($this, 'support_generatepress'),
+                'integrate' => array($this, 'integrate_generatepress'),
                 'alpha' => true,
             ));
             $this->add_integration('oceanwp', array(
                 'name' => __('OceanWP', 'kt-tinymce-color-grid'),
-                'enabled' => defined('OCEANWP_THEME_VERSION'),
-                'palette' => array($this, 'integrate_oceanwp'),
+                'enabled' => array($this, 'support_oceanwp'),
+                'integrate' => array($this, 'integrate_oceanwp'),
                 'alpha' => true,
             ));
             $this->add_integration('beaverbuilder', array(
                 'name' => __('Beaver Builder', 'kt-tinymce-color-grid'),
                 'enabled' => array($this, 'support_beaver'),
-                'palette' => array($this, 'integrate_beaver'),
+                'integrate' => array($this, 'integrate_beaver'),
                 'alpha' => false,
+            ));
+            $this->add_integration('astra-theme', array(
+                'name' => __('Astra Theme', 'kt-tinymce-color-grid'),
+                'enabled' => array($this, 'support_astra'),
+            ));
+            $this->add_integration('page-builder-framework', array(
+                'name' => __('Page Builder Framework', 'kt-tinymce-color-grid'),
+                'enabled' => array($this, 'support_pagebuilder'),
             ));
         }
 
+        public function default_export_formats() {
+            $this->add_export_format('base64', array(
+                'extension' => 'bak',
+                'name' => __('Backup', 'kt-tinymce-color-grid'),
+                'form' => array($this, 'print_base64_export_form'),
+                'export' => array($this, 'export_base64'),
+            ));
+            $this->add_export_format('css', array(
+                'extension' => 'css',
+                'name' => __('CSS', 'kt-tinymce-color-grid'),
+                'form' => array($this, 'print_css_export_form'),
+                'export' => array($this, 'export_css'),
+            ));
+            $this->add_export_format('json', array(
+                'extension' => 'json',
+                'name' => __('JSON', 'kt-tinymce-color-grid'),
+                'form' => array($this, 'print_base64_export_form'),
+                'export' => array($this, 'export_json'),
+            ));
+            $this->add_export_format('scss-partial', array(
+                'extension' => 'scss',
+                'prefix' => '_',
+                'name' => __('SCSS Partial', 'kt-tinymce-color-grid'),
+                'form' => array($this, 'print_css_export_form'),
+                'export' => array($this, 'export_css'),
+            ));
+            $this->add_export_format('scss-vars', array(
+                'extension' => 'scss',
+                'prefix' => '_',
+                'name' => __('SCSS Variables', 'kt-tinymce-color-grid'),
+                'form' => array($this, 'print_scss_export_form'),
+                'export' => array($this, 'export_scss'),
+            ));
+        }
+
+        public function default_import_formats() {
+            $this->add_import_format('bak', array(
+                'extension' => 'bak',
+                'parser' => array($this, 'import_bak'),
+            ));
+            $this->add_import_format('json', array(
+                'extension' => 'json',
+                'parser' => array($this, 'import_json'),
+            ));
+        }
+
+        public function support_gutenberg() {
+            return defined('GUTENBERG_VERSION');
+        }
+
+        /**
+         * Check for Beaver Builder
+         * @since 2.0
+         * @ignore
+         * @return boolean
+         */
         public function support_beaver() {
             return defined('FL_BUILDER_VERSION') && version_compare(FL_BUILDER_VERSION, '1.7.6', '>=');
         }
 
-        public function integrate_beaver() {
-            add_filter('fl_builder_color_presets', array($this, 'beaver_integration'));
-            add_action('wp_enqueue_scripts', array($this, 'beaver_style'));
-        }
-
-        public function beaver_style() {
-            if (class_exists('FLBuilderModel') && FLBuilderModel::is_builder_active()) {
-                wp_enqueue_style(self::KEY . '-beaver', KT_CENTRAL_PALETTE_URL . 'css/beaver.css', null, KT_CENTRAL_PALETTE);
-            }
-        }
-
-        public function beaver_integration() {
-            return $this->get_palette(array(
-                    'min' => false,
-                    'hash' => false,
-                    'alpha' => false,
-            ));
+        /**
+         * Check for OceanWP
+         * @since 2.0
+         * @ignore
+         * @return boolean
+         */
+        public function support_oceanwp() {
+            return defined('OCEANWP_THEME_VERSION') && version_compare(OCEANWP_THEME_VERSION, '1.4.9', '>=');
         }
 
         /**
-         * Add filters an actions for integration with Elementor
+         * Check for Elementor
+         * @since 2.0
+         * @ignore
+         * @return boolean
+         */
+        public function support_elementor() {
+            return defined('ELEMENTOR_VERSION') && version_compare(ELEMENTOR_VERSION, '1.0.0', '>=');
+        }
+
+        /**
+         * Check for GeneratePress
+         * @since 2.0
+         * @ignore
+         * @return boolean
+         */
+        public function support_generatepress() {
+            return defined('GP_PREMIUM_VERSION') && version_compare(GP_PREMIUM_VERSION, '1.2.93', '>=');
+        }
+
+        public function support_astra() {
+            return defined('ASTRA_THEME_VERSION');
+        }
+
+        public function support_pagebuilder() {
+            return defined('WPBF_VERSION');
+        }
+
+        /**
+         * Add filter for integration with Beaver Builder
+         * @since 2.0
+         * @ignore
+         */
+        public function integrate_beaver() {
+            add_filter('fl_builder_color_presets', array($this, 'beaver_integration'));
+            add_action('wp_enqueue_scripts', array($this, 'enqueue_beaver_style'));
+        }
+
+        /**
+         * Add filters and actions for integration with Elementor
          * @since 2.0
          * @ignore
          */
         public function integrate_elementor() {
-            add_filter('elementor/editor/localize_settings', array($this, 'elementor_integration'));
-            add_action('elementor/editor/after_enqueue_scripts', array($this, 'elementor_styles'));
+            add_filter('elementor/editor/localize_settings', array($this, 'elementor_integration'), 100);
+            add_action('elementor/editor/after_enqueue_scripts', array($this, 'enqueue_elementor_styles'));
         }
 
         /**
@@ -842,9 +1122,70 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             add_filter('ocean_default_color_palettes', array($this, 'oceanwp_integration'));
         }
 
+        public function integrate_tinymce() {
+            if (get_option(self::GRID_TYPE, self::DEFAULT_GRID_TYPE) != 'default') {
+                add_filter('tiny_mce_before_init', array($this, 'tinymce_integration'));
+                add_action('after_wp_tiny_mce', array($this, 'print_tinymce_style'));
+            }
+        }
+
+        public function integrate_customizer() {
+            $fn = array($this, 'iris_integration');
+            add_action('admin_print_scripts', $fn);
+            add_action('admin_print_footer_scripts', $fn);
+            add_action('customize_controls_print_scripts', $fn);
+            add_action('customize_controls_print_footer_scripts', $fn);
+        }
+
+        public function integrate_gutenberg() {
+            $palette = get_option(self::PALETTE, array());
+            if (!$palette) {
+                return;
+            }
+
+            foreach ($palette as $i => $set) {
+                if ($set['name'] === '') {
+                    $set['color'] = trim($set['color'], '#');
+                }
+                unset($palette['alpha']);
+                $palette[$i] = $set;
+            }
+
+            add_theme_support('editor-color-palette', $palette);
+            add_action('wp_print_styles', array($this, 'print_gutenberg_style'));
+            add_action('admin_print_styles', array($this, 'print_gutenberg_style'));
+        }
+
+        public function print_gutenberg_style() {
+            if (is_admin()) {
+                $screen = get_current_screen();
+                if ($screen->base != 'post') {
+                    return;
+                }
+            }
+
+            $palette = get_option(self::PALETTE, array());
+            if (!$palette) {
+                return;
+            }
+
+            print '
+<style type="text/css">';
+            foreach ($palette as $set) {
+                printf('
+  .has-%1$s-color {
+    color: %2$s }
+  .has-%1$s-background-color {
+    background-color: %2$s }', $set['slug'], $set['color']);
+            }
+            print '
+</style>';
+        }
+
         /**
          * Get the color palette
          * @since 1.11
+         * @since 2.0 Introduced $options argument
          * @param string|array $options
          * @return array
          */
@@ -854,6 +1195,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 'min' => 6,
                 'pad' => '#FFFFFF',
                 'hash' => true,
+                'default' => array(),
             ));
             $palette = get_option(self::PALETTE, array());
             $_palette = array();
@@ -873,7 +1215,46 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 }
                 $_palette = array_pad($_palette, $options['min'], $pad);
             }
+            if (!count($_palette) && is_array($options['default'])) {
+                $_palette = $options['default'];
+            }
+
+            /**
+             * Filter the palette
+             * @since 2.0
+             * @param array $palette
+             * @param array $raw
+             * @param string|array $options
+             * @param kt_Central_Palette $instance
+             */
             return apply_filters(self::HOOK . 'get_palette', $_palette, $palette, $options, $this);
+        }
+
+        /**
+         * Enqueue a stylesheet for Beaver Builder
+         * @since 1.12
+         * @ignore
+         */
+        public function enqueue_beaver_style() {
+            if (class_exists('FLBuilderModel') && FLBuilderModel::is_builder_active()) {
+                wp_enqueue_style(self::KEY . '-beaver', KT_CENTRAL_PALETTE_URL . 'css/beaver.css', null, KT_CENTRAL_PALETTE);
+            }
+        }
+
+        /**
+         * Beaver Builder integration
+         * @since 1.12
+         * @ignore
+         * @param array $palette
+         * @return array
+         */
+        public function beaver_integration($palette) {
+            return $this->get_palette(array(
+                    'min' => false,
+                    'hash' => false,
+                    'alpha' => false,
+                    'default' => $palette,
+            ));
         }
 
         /**
@@ -904,7 +1285,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          * @since 1.10
          * @ignore
          */
-        public function elementor_styles() {
+        public function enqueue_elementor_styles() {
             wp_enqueue_style(self::KEY . '-elementor', KT_CENTRAL_PALETTE_URL . 'css/elementor.css', null, KT_CENTRAL_PALETTE);
         }
 
@@ -966,22 +1347,23 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
         /**
          * Add dynamic CSS for TinyMCE
          * @since 1.3
+         * @since 1.12.3 Change css selector
          * @ignore
          */
         public function print_tinymce_style() {
             $map = get_option(self::MAP);
-            if (!$map || !$map['rows']) {
+            if (!is_array($map) || !$map['rows']) {
                 return;
             }
             $rows = $map['rows'];
             print "<style type='text/css'>
-.mce-grid {border-spacing: 0; border-collapse: collapse}
-.mce-grid td {padding: 0}
-.mce-grid td.mce-grid-cell div {border-style: solid none none solid}
-.mce-grid td.mce-grid-cell:last-child div {border-right-style: solid}
-.mce-grid tr:nth-child($rows) td.mce-grid-cell div,
-.mce-grid tr:last-child td.mce-grid-cell div {border-bottom-style: solid}
-.mce-grid tr:nth-child($rows) td {padding-bottom: 4px}
+.mce-colorbutton-grid {border-spacing: 0; border-collapse: collapse}
+.mce-colorbutton-grid td {padding: 0}
+.mce-colorbutton-grid td.mce-grid-cell div {border-style: solid none none solid}
+.mce-colorbutton-grid td.mce-grid-cell:last-child div {border-right-style: solid}
+.mce-colorbutton-grid tr:nth-child($rows) td.mce-grid-cell div,
+.mce-colorbutton-grid tr:last-child td.mce-grid-cell div {border-bottom-style: solid}
+.mce-colorbutton-grid tr:nth-child($rows) td {padding-bottom: 4px}
 </style>";
         }
 
@@ -994,10 +1376,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
          */
         public function tinymce_integration($init) {
             $map = get_option(self::MAP);
-            if ($map) {
-                if (!$map['rows']) {
-                    return $init;
-                }
+            if (is_array($map) && $map['rows']) {
                 $init['textcolor_map'] = $map['map'];
                 $init['textcolor_cols'] = $map['columns'];
                 $init['textcolor_rows'] = $map['rows'];
@@ -1039,19 +1418,16 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
         public function init_settings_page() {
             add_filter('removable_query_args', array($this, 'add_removeable_args'));
             add_action('admin_enqueue_scripts', array($this, 'enqueue_settings_scripts'));
+
             add_action(self::HOOK . 'init_grid_types', array($this, 'default_grid_types'));
             add_action(self::HOOK . 'init_luma_types', array($this, 'default_luma_types'));
+            add_action(self::HOOK . 'init_export_formats', array($this, 'default_export_formats'));
+            add_action(self::HOOK . 'init_import_formats', array($this, 'default_import_formats'));
 
-            add_action(self::HOOK . 'grid_metabox', array($this, 'print_grid_type_options'));
-
-            add_action(self::HOOK . 'palette_metabox', array($this, 'print_default_options'));
-            add_action(self::HOOK . 'palette_metabox', array($this, 'print_integration_options'), 20);
-            add_action(self::HOOK . 'palette_metabox', array($this, 'print_color_toolbar'), 30);
-            add_action(self::HOOK . 'palette_metabox', array($this, 'print_color_editor'), 40);
-
-            add_action(self::HOOK . 'palette_toolbar', array($this, 'print_add_color_button'));
-            add_action(self::HOOK . 'palette_toolbar', array($this, 'print_transparency_switch'), 20);
-            add_action(self::HOOK . 'palette_toolbar', array($this, 'print_autoname_switch'), 30);
+            $natives = array(
+                'astra' => __('Astra Theme', 'kt-tinymce-color-grid'),
+                'page-builder-framework' => __('Page Builder Framework', 'kt-tinymce-color-grid'),
+            );
 
             /**
              * Add grid types
@@ -1067,9 +1443,45 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
              */
             do_action(self::HOOK . 'init_luma_types', $this);
 
+            /**
+             * Register export formats
+             * @since 2.0
+             * @param kt_Central_Palette $instance
+             */
+            do_action(self::HOOK . 'init_export_formats', $this);
+
+            /**
+             * Register import formats
+             * @since 2.0
+             * @param kt_Central_Palette $instance
+             */
+            do_action(self::HOOK . 'init_import_formats', $this);
+
             $this->save_settings();
+
+            add_action(self::HOOK . 'grid_metabox', array($this, 'print_grid_type_options'), 10);
+
+            add_action(self::HOOK . 'palette_metabox', array($this, 'print_integration_forms'), 10);
+            add_action(self::HOOK . 'palette_metabox', array($this, 'print_color_toolbar'), 20);
+            add_action(self::HOOK . 'palette_metabox', array($this, 'print_color_editor'), 30);
+
+            add_action(self::HOOK . 'palette_toolbar', array($this, 'print_add_color_button'), 10);
+            add_action(self::HOOK . 'palette_toolbar', array($this, 'print_transparency_switch'), 20);
+            add_action(self::HOOK . 'palette_toolbar', array($this, 'print_autoname_switch'), 30);
+
+            add_action(self::HOOK . 'backup_metabox', array($this, 'print_export_form'), 10);
+            add_action(self::HOOK . 'backup_metabox', array($this, 'print_import_form'), 20);
+
             $this->add_help();
-            $this->add_metaboxes();
+
+            $boxes = array(
+                'grid' => __('TinyMCE Color Picker', 'kt-tinymce-color-grid'),
+                'palette' => __('Color Palette', 'kt-tinymce-color-grid'),
+                'backup' => __('Backup', 'kt-tinymce-color-grid'),
+            );
+            foreach ($boxes as $key => $title) {
+                add_meta_box("kt_{$key}_metabox", $title, array($this, "print_{$key}_metabox"));
+            }
 
             /**
              *
@@ -1107,41 +1519,28 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
          * @return array
          */
         public function add_removeable_args($args) {
+            $args[] = 'kt-save-error';
             $args[] = 'kt-import-error';
             $args[] = 'kt-export-error';
             return $args;
         }
 
         /**
-         * Add metaboxes to settings page
-         * @since 1.9
-         * @ignore
-         */
-        protected function add_metaboxes() {
-            $boxes = array(
-                'grid' => __('TinyMCE Color Picker', 'kt-tinymce-color-grid'),
-                'palette' => __('Color Palette', 'kt-tinymce-color-grid'),
-                'backup' => __('Backup', 'kt-tinymce-color-grid'),
-            );
-            foreach ($boxes as $key => $title) {
-                add_meta_box("kt_{$key}_metabox", $title, array($this, "print_{$key}_metabox"));
-            }
-        }
-
-        /**
          * Pass a HTTP request value through a filter and store it as option
          * @since 1.7
          * @ignore
-         * @param string $key
-         * @param array $constrain
-         * @param string $option
-         * @param mixed $default
+         * @param array $option
          * @return mixed
          */
-        protected function set_option($key, $constrain, $option, $default) {
-            $value = $this->get_request($key, $default);
-            $value = in_array($value, $constrain) ? $value : $default;
-            update_option($option, $value);
+        protected function set_option($option) {
+            list($key, $constrain, $name, $default) = $option;
+            $value = $this->get_request("kt_{$key}", $default);
+            if (is_array($constrain)) {
+                $value = in_array($value, $constrain) ? $value : $default;
+            } else if (is_bool($constrain)) {
+                $value = $value ? '1' : '';
+            }
+            update_option($name, $value);
             return $value;
         }
 
@@ -1155,22 +1554,23 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
                 return;
             }
 
-            $action = $this->get_request('kt_action', $this->get_request('kt_hidden_action'));
-
-            $this->save_booleans();
             $this->save_integrations();
-            $this->save_palette($action);
+            $action = $this->save_palette();
 
-            $lumas = $this->get_luma_types('id');
-
-            $this->set_option('kt_rows', $this->rows, self::ROWS, self::DEFAULT_ROWS);
-            $this->set_option('kt_cols', $this->columns, self::COLS, self::DEFAULT_COLS);
-            $this->set_option('kt_luma', $lumas, self::LUMA, self::DEFAULT_LUMA);
-            $this->set_option('kt_blocks', $this->blocks, self::BLOCKS, self::DEFAULT_BLOCKS);
-            $this->set_option('kt_block_size', $this->sizes, self::SIZE, self::DEFAULT_SIZE);
-            $this->set_option('kt_axis', $this->axes, self::AXIS, self::DEFAULT_AXIS);
-            $this->set_option('kt_spread', $this->spread, self::SPREAD, self::DEFAULT_SPREAD);
-            $this->set_option('kt_clamp', $this->clamp, self::CLAMP, self::DEFAULT_CLAMP);
+            $options = array(
+                array('alpha', true, self::ALPHA, null),
+                array('rows', $this->rows, self::ROWS, self::DEFAULT_ROWS),
+                array('cols', $this->columns, self::COLS, self::DEFAULT_COLS),
+                array('luma', $this->get_luma_types('id'), self::LUMA, self::DEFAULT_LUMA),
+                array('blocks', $this->blocks, self::BLOCKS, self::DEFAULT_BLOCKS),
+                array('block_size', $this->sizes, self::SIZE, self::DEFAULT_SIZE),
+                array('axis', $this->axes, self::AXIS, self::DEFAULT_AXIS),
+                array('spread', $this->spread, self::SPREAD, self::DEFAULT_SPREAD),
+                array('clamp', $this->clamp, self::CLAMP, self::DEFAULT_CLAMP),
+            );
+            foreach ($options as $option) {
+                $this->set_option($option);
+            }
 
             $clamps = intval($this->get_request('kt_clamps'));
             if ($clamps < self::MIN_CLAMP || $clamps > self::MAX_CLAMP) {
@@ -1178,33 +1578,35 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             }
             update_option(self::CLAMPS, $clamps);
 
-            $error = $this->handle_backup($action);
+            list($error, $_action) = $this->handle_backup($action);
+
+            /**
+             * Fires after settings were saved
+             * @since 2.0
+             * @param string $action
+             * @param kt_Central_Palette $instance
+             */
+            do_action(self::HOOK . 'save_settings', $action, $this);
 
             if (!$error || $error == 'ok') {
                 $this->render_map();
             }
 
             if ($error) {
-                $url = add_query_arg("kt-{$action}-error", $error);
+                $url = add_query_arg("kt-{$_action}-error", $error);
                 wp_redirect($url);
                 exit;
             }
 
-            wp_redirect(add_query_arg('updated', $action == 'save' ? '1' : false));
+            wp_redirect(add_query_arg('updated', $_action == 'save' ? '1' : false));
             exit;
         }
 
-        protected function save_booleans() {
-            $booleans = array(
-                'kt_alpha' => self::ALPHA,
-                'kt_customizer' => self::CUSTOMIZER,
-            );
-            foreach ($booleans as $field => $option) {
-                $checked = $this->get_request($field) ? '1' : false;
-                update_option($option, $checked);
-            }
-        }
-
+        /**
+         * Save integrations
+         * @since 2.0
+         * @ignore
+         */
         protected function save_integrations() {
             $integrate = array();
             $_integrate = $this->get_request('kt_integrate', array());
@@ -1217,59 +1619,88 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             update_option(self::INTEGRATE, $integrate);
         }
 
-        protected function save_palette($action) {
-            $palette = $this->compile_palette();
-            $palette = $this->edit_palette($palette, $action);
+        /**
+         * Save the palette from form submitted data
+         * @since 2.0
+         * @ignore
+         * @return string
+         */
+        protected function save_palette() {
+            list($palette, $action) = $this->compile_palette();
 
             $type = $this->get_request('kt_type');
             $types = $this->get_grid_types('id');
             if (!in_array($type, $types)) {
                 $type = self::DEFAULT_GRID_TYPE;
             }
-            $visual = $type == 'palette' || $this->get_request('kt_visual') ? '1' : false;
             if ($type == 'palette' && !$palette) {
                 $type = 'default';
-                $visual = '';
+                $this->deactivate_integration('tinymce');
             }
             update_option(self::GRID_TYPE, $type);
-            update_option(self::VISUAL, $visual);
             update_option(self::PALETTE, $palette);
+
+            return $action;
         }
 
+        /**
+         * Compile palette from form submitted data
+         * @since 2.0
+         * @ignore
+         * @return array
+         */
         protected function compile_palette() {
             $palette = array();
             $colors = $this->get_request('kt_colors', array());
             $alphas = $this->get_request('kt_alphas', array());
             $names = $this->get_request('kt_names', array());
+            $ntc = $this->get_request('kt_ntc_names', array());
             foreach ($names as $i => $name) {
                 $color = $this->sanitize_color($colors[$i]);
                 if ($color) {
-                    $name = sanitize_text_field(stripslashes($name));
                     $alpha = $this->sanitize_alpha($alphas[$i]);
-                    $palette[] = compact('color', 'alpha', 'name');
+                    $name = sanitize_text_field(stripslashes($name));
+                    $_name = sanitize_text_field(stripslashes($ntc[$i]));
+                    $slug = $this->get_color_slug($color, $name, $_name);
+                    $palette[] = compact('color', 'alpha', 'name', 'slug');
                 }
             }
-            return $palette;
+            return $this->edit_palette($palette);
         }
 
-        protected function edit_palette($palette, $action) {
+        protected function get_color_slug($color, $name, $_name = '') {
+            $slug = $this->sanitize_html_class($name);
+            if ($slug === '') {
+                $slug = $this->sanitize_html_class($_name);
+                if ($slug === '') {
+                    $slug = trim($color, '#');
+                }
+            }
+            return $slug;
+        }
+
+        /**
+         * Perform edit options on the palette
+         * @since 2.0
+         * @ignore
+         * @param array $palette
+         * @return array
+         */
+        protected function edit_palette($palette) {
             $m = null;
             $l = count($palette);
+            $action = $this->get_request('kt_action', $this->get_request('kt_hidden_action'));
             if ($action == 'add') {
-                $color = '#000000';
-                $alpha = 100;
-                $name = '';
-                $palette[] = compact('color', 'alpha', 'name');
-            } else if ($l > 0) {
-                $i = $this->preg_get('~remove-(\d+)~', $action);
-                if ($i !== null && key_exists($i, $palette)) {
-                    array_splice($palette, $i, 1);
-                }
-            } else if ($l > 1 && preg_match('~sort-(\d+)-(up|down)~', $action, $m) && key_exists($m[1], $palette)) {
-                $i = $j = $m[1];
-                if ($m[2] == 'up' && $i > 0) {
+                $this->palette_add($palette, '#000000', 100, '', 'Black');
+            } else if ($l > 0 && preg_match('~(remove)-(\d+)~', $action, $m) && isset($palette[$m[2]])) {
+                array_splice($palette, $m[2], 1);
+                $action = $m[1];
+            } else if ($l > 1 && preg_match('~(sort)-(\d+)-(up|down)~', $action, $m) && isset($palette[$m[2]])) {
+                list($action, $i, $dir) = array_slice($m, 1);
+                $j = $i;
+                if ($dir == 'up' && $i > 0) {
                     $j = $i - 1;
-                } else if ($m[2] == 'down' && $i < ($l - 1)) {
+                } else if ($dir == 'down' && $i < ($l - 1)) {
                     $j = $i + 1;
                 }
                 if ($i != $j) {
@@ -1278,16 +1709,45 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
                     $palette[$j] = $temp;
                 }
             }
-            return $palette;
+            return array($palette, $action);
         }
 
-        protected function handle_backup(&$action) {
+        /**
+         * Handle backup
+         * @since 2.0
+         * @ignore
+         * @param string $action
+         * @return array [status, action]
+         */
+        protected function handle_backup($action) {
+            $error = false;
             switch ($action) {
-                case 'export': return $this->export_backup();
-                case 'import': return $this->import_backup();
+                case 'export':
+                    $error = $this->download_export();
+                    break;
+
+                case 'import':
+                    $error = $this->import_backup();
+                    break;
+
+                default:
+                    $action = 'save';
             }
-            $action = 'save';
-            return false;
+
+            if (is_wp_error($error)) {
+                $error = $error->get_error_code();
+            }
+
+            /**
+             * Filter the settings error code
+             * @since 2.0
+             * @param string|boolean $code
+             * @param string $action
+             * @param kt_Central_Palette $instance
+             */
+            $error = apply_filters(self::HOOK . 'error_code', $error, $action, $this);
+
+            return array($error, $action);
         }
 
         /**
@@ -1303,8 +1763,6 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
                 self::ACTIVE_VERSION => KT_CENTRAL_PALETTE
             );
             $settings = array(
-                self::VISUAL => false,
-                self::CUSTOMIZER => false,
                 self::INTEGRATE => array(),
                 self::ALPHA => false,
                 self::GRID_TYPE => self::DEFAULT_GRID_TYPE,
@@ -1340,6 +1798,21 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
         }
 
         /**
+         * Add a color to the palette
+         * @param array $palette Passed by reference
+         * @param string $color
+         * @param int $alpha [optional] 100
+         * @param string $name [optional] ""
+         */
+        protected function palette_add(&$palette, $color, $alpha = 100, $name = '', $slug = '') {
+            $color = $this->sanitize_color($color);
+            if ($color) {
+                $alpha = $this->sanitize_alpha($alpha);
+                $palette[] = compact('color', 'alpha', 'name', 'slug');
+            }
+        }
+
+        /**
          * Import settings from file upload
          * @since 1.8
          * @ignore
@@ -1350,75 +1823,61 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
                 $file = $_FILES['kt_upload'];
                 $status = $this->verify_upload($file);
                 if ($status != 'ok') {
-                    return $status;
+                    return new WP_Error($status);
                 }
                 $base64 = file_get_contents($file['tmp_name']);
             } else if (isset($_REQUEST['kt_import'])) {
                 $base64 = $_REQUEST['kt_import'];
             } else {
-                return 'no-import';
+                return new WP_Error('no-import');
             }
 
             if (substr($base64, 0, 1) == '#') {
                 $colors = preg_split('~[^#0-9A-Fa-f]+~', $base64);
                 $palette = array();
-                $alpha = 100;
-                $name = '';
                 foreach ($colors as $color) {
-                    $color = $this->sanitize_color($color);
-                    if ($color) {
-                        $palette[] = compact('color', 'alpha', 'name');
-                    }
+                    $this->palette_add($palette, $color);
                 }
-                if ($palette) {
-                    update_option(self::PALETTE, $palette);
-                    $this->render_map();
-                    return 'ok';
+                if (!count($palette)) {
+                    return new WP_Error('empty');
                 }
+                update_option(self::PALETTE, $palette);
+                $this->render_map();
                 return;
             }
 
             $crc32 = substr($base64, -8);
             if (strlen($crc32) != 8) {
-                return 'empty';
+                return new WP_Error('empty');
             }
             $base64 = substr($base64, 0, -8);
             if (dechex(crc32($base64)) != $crc32) {
-                return 'corrupt';
+                return new WP_Error('corrupt');
             }
             $json = base64_decode($base64);
             $options = json_decode($json, true);
             if (!is_array($options)) {
-                return 'funny';
+                return new WP_Error('funny');
             }
             if (!isset($options[self::ACTIVE_VERSION])) {
                 $options[self::ACTIVE_VERSION] = 180;
             }
             $this->update_import($options);
+
             $names = array_keys($this->compile_backup());
-
-            /**
-             * Filters the import data
-             * @since 2.0
-             * @param array $options
-             * @param kt_Central_Palette $instance
-             */
-            $options = apply_filters(self::HOOK . 'import_backup', $options, $this);
-
             foreach ($names as $name) {
                 if (isset($options[$name])) {
                     update_option($name, $options[$name]);
                 }
             }
+
             /**
              * Fires after an import
              * @since 2.0
              * @param array $options
              * @param kt_Central_Palette $instance
              */
-            do_action(self::HOOK . 'import_backup', $options, $this);
-
-            return 'ok';
+            do_action(self::HOOK . 'import', $options, $this);
         }
 
         /**
@@ -1476,13 +1935,20 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
                     case 1100:
                     case 1110:
                     case '1.11':
+                    case '1.12':
+                    case '1.12.1':
+                    case '1.12.2':
+                    case '1.12.3':
+                    case '1.12.4':
+                    case '1.12.5':
                         $version = '2.0';
                         $key = 'kt_color_grid_palette';
                         $palette = array();
                         foreach ($options[$key] as $set) {
                             list($color, $alpha, $name) = $set;
                             $color = '#' . ltrim($color, '#');
-                            $palette[] = compact('color', 'alpha', 'name');
+                            $slug = $this->get_color_slug($color, $name);
+                            $palette[] = compact('color', 'alpha', 'name', 'slug');
                         }
                         $options[$key] = $palette;
                         break;
@@ -1494,15 +1960,80 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
         }
 
         /**
+         * Get file name for export file download
+         * @since 2.0
+         * @param array $format A export format
+         * @return string The filename
+         */
+        protected function get_export_filename($format) {
+            $ext = $format['extension'];
+            $prefix = $format['prefix'];
+            $name = get_bloginfo('name');
+            $suffix = sanitize_file_name(preg_replace('~"~', '', $name));
+            if ($suffix) {
+                $suffix = "_$suffix";
+            }
+            return "{$prefix}central-palette{$suffix}.{$ext}";
+        }
+
+        /**
          * Export settings and trigger a file download
          * @since 1.8
-         * @ignore
-         * @return string
+         * @since 2.0 Added export types: json, css, scss
+         * @since 2.0 Changed return type to WP_Error
+         * @return WP_Error
          */
-        protected function export_backup() {
+        protected function download_export() {
+            $payload = null;
+            $id = $this->get_request('kt_export_format');
+            $format = $this->get_export_format($id);
+            if (!$format) {
+                return new WP_Error('format');
+            }
+
+            $args = isset($format['args']) ? $format['args'] : null;
+            $payload = $this->call($format['export'], $this, $args);
+
+            if (!$payload) {
+                return new WP_Error('empty');
+            }
+            if (is_wp_error($payload)) {
+                return $payload;
+            }
+
+            $filename = $this->get_export_filename($format);
+            #header('Content-Type: plain/text');
+            #header('Content-Disposition: attachment; filename="' . $filename . '"');
+            print '<xmp>'.$payload;
+            exit;
+        }
+
+        /**
+         * Export as base64 backup file
+         * @since 2.0
+         * @return string|WP_Error
+         */
+        protected function export_base64() {
+            $json = $this->export_json();
+            if (is_wp_error($json)) {
+                return $json;
+            }
+            $base64 = base64_encode($json);
+            if (!$base64) {
+                return new WP_Error('base64');
+            }
+            return $base64 . dechex(crc32($base64));
+        }
+
+        /**
+         * Export as json string
+         * @since 2.0
+         * @return string|WP_Error
+         */
+        protected function export_json() {
             $parts = $this->get_request('kt_export');
             if (!is_array($parts) || !$parts) {
-                return 'no-export';
+                return new WP_Error('no-export');
             }
             $options = $this->compile_backup($parts);
             foreach ($options as $name => $default) {
@@ -1516,28 +2047,73 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
              * @parts array $parts
              * @param kt_Central_Palette $instance
              */
-            $options = apply_filters(self::HOOK . 'export_backup', $options, $parts, $this);
+            $options = apply_filters(self::HOOK . 'export', $options, $parts, $this);
 
             $json = json_encode($options);
             if (!$json) {
-                return 'json';
+                return new WP_Error('json');
             }
-            $base64 = base64_encode($json);
-            if (!$base64) {
-                return 'base64';
+            return $json;
+        }
+
+        /**
+         * Export as CSS
+         * @since 2.0
+         * @return string
+         */
+        protected function export_css() {
+            $css = array();
+            $palette = get_option(self::PALETTE, array());
+            $add_alpha = $this->get_request('kt_export_css_alpha');
+            $prefix = $this->get_request('kt_export_css_prefix');
+            $suffix = $this->get_request('kt_export_css_suffix');
+            foreach ($palette as $set) {
+                $hex = $set['color'];
+                $alpha = $set['alpha'];
+                $name = $this->get_css_class_name($set['slug'], $prefix, $suffix);
+                $css[] = ".$name {
+  color: $hex" . ($add_alpha && $alpha < 100 ? ';
+  color: ' . $this->hex2rgba($hex, $alpha) : '') . " }\n";
             }
-            $base64 .= dechex(crc32($base64));
-            $blogname = get_bloginfo('name');
-            $blogname = preg_replace(array('~"~', '~[\s-]+~'), array('', '-'), $blogname);
-            $blogname = trim($blogname, '-_.');
-            if ($blogname) {
-                $blogname = "_$blogname";
+            return implode("\n", $css);
+        }
+
+        protected function export_scss() {
+            $vars = array();
+            $palette = get_option(self::PALETTE, array());
+            $prefix = $this->get_request('kt_export_scss_prefix');
+            $suffix = $this->get_request('kt_export_scss_suffix');
+            foreach ($palette as $set) {
+                $hex = $set['color'];
+                $alpha = $set['alpha'];
+                $name = $this->get_css_class_name($set['slug'], $prefix, $suffix);
+                $vars[] = "\$$name: " . $this->hex2rgba($hex, $alpha) . ";\n";
             }
-            $filename = "central-palette$blogname.bak";
-            header('Content-Type: plain/text');
-            header('Content-Disposition: attachment; filename="' . $filename . '"');
-            print $base64;
-            exit;
+            return implode('', $vars);
+        }
+
+        protected function get_css_class_name($slug, $prefix = '', $suffix = '') {
+            static $duplicates = array();
+
+            $prefix = sanitize_html_class($prefix);
+            $suffix = sanitize_html_class($suffix);
+            $name = "$prefix$slug$suffix";
+            if (isset($duplicates[$name])) {
+                $i = $duplicates[$name];
+                $duplicates[$name] += 1;
+                $name .= "-$i";
+            } else {
+                $duplicates[$name] = 1;
+            }
+
+            return $name;
+        }
+
+        protected function sanitize_html_class($in) {
+            $out = strtolower($in);
+            $out = preg_replace('~%[a-fA-F0-9]{2}~', '', $out);
+            $out = preg_replace('~\s+~', '-', $out);
+            return preg_replace('~[^a-zA-Z0-9_-]~', '', $out);
         }
 
         /**
@@ -1552,7 +2128,8 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             }
 
             $grid_type = $this->get_grid_type($current_type);
-            $map = call_user_func($grid_type['render'], $this, $current_type);
+            $args = isset($grid_type['args']) ? $grid_type['args'] : $this;
+            $map = $this->call($grid_type['render'], $args);
             $map = $this->sanitize_map($map);
             update_option(self::MAP, $map);
         }
@@ -1600,8 +2177,8 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
 
 
             $count = $n / 2;
-            $no_rows = !isset($map['rows']) || !$map['rows'];
-            $no_cols = !isset($map['columns']) || !$map['columns'];
+            $no_rows = !isset($map['rows']) || $map['rows'] < 1;
+            $no_cols = !isset($map['columns']) || $map['columns'] < 1;
             if ($no_rows && $no_cols) {
                 $map['columns'] = self::TINYMCE_COLS;
             } else if ($no_cols) {
@@ -1621,12 +2198,17 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
         protected function chunk_palette() {
             $palette = array();
             list($rows, $cols) = $this->get_palette_size();
-            if (get_option(self::VISUAL)) {
+            if ($this->is_integration_active('tinymce')) {
                 $palette = get_option(self::PALETTE, array());
                 if ($palette) {
                     $palette = array_chunk($palette, $rows);
                     $last = count($palette) - 1;
-                    $pad = array('color' => 'FFFFFF', 'alpha' => 100, 'name' => '');
+                    $pad = array(
+                        'color' => '#FFFFFF',
+                        'alpha' => 100,
+                        'name' => '',
+                        'slug' => '#FFFFFF',
+                    );
                     $palette[$last] = array_pad($palette[$last], $rows, $pad);
                 }
             }
@@ -1800,6 +2382,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
          * @return array
          */
         protected function apply_luma($luma, $rgb) {
+            // TODO: Luma is broken
             foreach ($rgb as $i => $c) {
                 if ($luma < 0) {
                     $c += $c * $luma;
@@ -1824,8 +2407,10 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             if ($type == 'linear') {
                 return $luma;
             }
+
             $luma_type = $this->get_luma_type($type);
-            $_luma = call_user_func($luma_type['fn'], $luma, $type);
+            $args = isset($luma_type['args']) ? $luma_type['args'] : $this;
+            $_luma = $this->call($luma_type['fn'], $luma, $args);
             return max(-1, min($_luma, 1));
         }
 
@@ -1932,8 +2517,9 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             $head = $this->version_compare('<', '4.3') ? 'h2' : 'h1';
             print "
 <div class='wrap'>
-  <$head>" . esc_html__('Settings', 'kt-tinymce-color-grid') . ' &rsaquo; ' . esc_html__('Central Color Palette', 'kt-tinymce-color-grid') . "</$head>";
+  <$head>" . esc_html__('Central Color Palette', 'kt-tinymce-color-grid') . "</$head>";
             $this->print_settings_error();
+            $this->print_settings_css();
 
             $support_alpha = $this->support_alpha() && get_option(self::ALPHA) ? ' class="support-alpha"' : '';
 
@@ -1946,7 +2532,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             wp_nonce_field('closedpostboxes', 'closedpostboxesnonce', false);
 
             /**
-             * Fires inside the the settings form before any metabox is printed
+             * Fires inside the settings form before any metabox is printed
              * @since 2.0
              * @param kt_Central_Palette $instance
              */
@@ -1982,8 +2568,6 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
     <div id='kt_picker' class='hidden' aria-hidden='true' aria-label='$picker_label'></div>
   </form>
 </div>";
-
-            $this->print_settings_css();
         }
 
         /**
@@ -1992,9 +2576,11 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
          * @ignore
          */
         protected function print_settings_error() {
-            $feedback = $error = '';
-            if (isset($_GET['kt-import-backup-error'])) {
-                $error = $_GET['kt-import-backup-error'];
+            $action = 'save';
+            $notice = $code = '';
+            if (isset($_GET['kt-import-error'])) {
+                $action = 'import';
+                $code = $_GET['kt-import-error'];
                 $import_errors = array(
                     'ok' => __('Backup successfuly imported.', 'kt-tinymce-color-grid'),
                     'no-import' => __('No data to process.', 'kt-tinymce-color-grid'),
@@ -2009,35 +2595,41 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
                     'fs' => __('Failed to write file to disk.', 'kt-tinymce-color-grid'),
                     'ext' => __('File upload stopped by PHP extension.', 'kt-tinymce-color-grid'),
                 );
-                $feedback = __('Import failed.', 'kt-tinymce-color-grid');
-                if (isset($import_errors[$error])) {
-                    $feedback = $import_errors[$error];
+                $notice = __('Import failed.', 'kt-tinymce-color-grid');
+                if (isset($import_errors[$code])) {
+                    $notice = $import_errors[$code];
                 }
-            } else if (isset($_GET['kt-export-backup-error'])) {
-                $error = $_GET['kt-export-backup-error'];
+            } else if (isset($_GET['kt-export-error'])) {
+                $action = 'export';
+                $code = $_GET['kt-export-error'];
                 $export_errors = array(
+                    'format' => __('Unknown export format.', 'kt-tinymce-color-grid'),
+                    'empty' => __('No export data.', 'kt-tinymce-color-grid'),
                     'no-export' => __('Please select which parts you would like to backup.', 'kt-tinymce-color-grid'),
                     'json' => __('Could not pack settings into JSON.', 'kt-tinymce-color-grid'),
                     'base64' => __('Could not convert settings.', 'kt-tinymce-color-grid'),
                 );
-                $feedback = __('Export failed.', 'kt-tinymce-color-grid');
-                if (isset($export_errors[$error])) {
-                    $feedback = $export_errors[$error];
+                $notice = __('Export failed.', 'kt-tinymce-color-grid');
+                if (isset($export_errors[$code])) {
+                    $notice = $export_errors[$code];
                 }
+            } else if (isset($_GET['kt-save-error'])) {
+                $code = $_GET['kt-save-error'];
             }
 
             /**
-             * Filters the settings error message
+             * Filters the settings error notice
              * @since 2.0
-             * @param string $feedback
-             * @param string $error
+             * @param string $notice The error notice
+             * @param string $code The error code
+             * @param string $action The current action
              * @param kt_Central_Palette $instance
              */
-            $feedback = apply_filters(self::HOOK . 'settings_error', $feedback, $error, $this);
+            $notice = apply_filters(self::HOOK . 'error_notice', $notice, $code, $action, $this);
 
-            if ($feedback) {
-                $type = $error == 'ok' ? 'updated' : 'error';
-                print "<div id='setting-error-import' class='$type settings-error notice is-dismissible'><p><strong>$feedback</strong></p></div>";
+            if ($notice) {
+                $type = $code == 'ok' ? 'updated' : 'error';
+                print "<div id='setting-error-import' class='$type settings-error notice is-dismissible'><p><strong>$notice</strong></p></div>";
             }
         }
 
@@ -2082,11 +2674,16 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             do_action(self::HOOK . 'grid_metabox', $this);
         }
 
+        /**
+         * Print grid type options
+         * @since 2.0
+         * @ignore
+         */
         public function print_grid_type_options() {
             $grid_types = $this->get_grid_types();
             print "
-<p><label>Type</label>
-  <span class='button-group type-chooser'>";
+<p><label id='kt_grid_type'>Type</label>
+  <span class='button-group toggle-button-group'>";
             foreach ($grid_types as $id => $grid_type) {
                 $id = "kt_grid_type_$id";
                 $label = esc_html($grid_type['name']);
@@ -2102,11 +2699,8 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
                 if (isset($grid_type['form'])) {
                     $form = $grid_type['form'];
                     if (is_callable($form)) {
-                        ob_start();
-                        $form = call_user_func($form, $this, $id);
-                        $_form = ob_get_contents();
-                        ob_end_clean();
-                        $form = $_form ? $_form : $form;
+                        $args = isset($grid_type['args']) ? $grid_type['args'] : $this;
+                        $form = $this->call($form, $args);
                     }
                     print "
 <div id='kt_grid_type_{$id}_form' class='grid-type-form'>$form</div>";
@@ -2114,6 +2708,11 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             }
         }
 
+        /**
+         * Print central palette grid type options
+         * @since 2.0
+         * @ignore
+         */
         public function print_palette_form() {
             $clamp = array(
                 'row' => __('row', 'kt-tinymce-color-grid'),
@@ -2140,6 +2739,11 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             }
         }
 
+        /**
+         * Print rainbow grid type options
+         * @since 2.0
+         * @ignore
+         */
         public function print_rainbow_form() {
             $_cols = get_option(self::COLS, self::DEFAULT_COLS);
             $_rows = get_option(self::ROWS, self::DEFAULT_ROWS);
@@ -2149,10 +2753,10 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
 <p>
   <label for='kt_rows'>" . esc_html__('Rows', 'kt-tinymce-color-grid') . "</label>$rows
   <label for='kt_cols'>" . esc_html__('Columns', 'kt-tinymce-color-grid') . "</label>$cols";
-            $luma_map = $this->get_luma_types('name');
-            if (count($luma_map) > 1) {
+            $lumas = $this->get_luma_types('name');
+            if (count($lumas) > 1) {
                 $current_luma = get_option(self::LUMA, self::DEFAULT_LUMA);
-                $luma = $this->selectbox('kt_luma', $luma_map, $current_luma);
+                $luma = $this->selectbox('kt_luma', $lumas, $current_luma);
                 print "
   <label for='kt_luma'>" . esc_html__('Luma', 'kt-tinymce-color-grid') . "</label>$luma";
             }
@@ -2160,6 +2764,11 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
 </p>';
         }
 
+        /**
+         * Print block grid type options
+         * @since 2.0
+         * @ignore
+         */
         public function print_blocks_form() {
             $_blocks = get_option(self::BLOCKS, self::DEFAULT_BLOCKS);
             $_size = get_option(self::SIZE, self::DEFAULT_SIZE);
@@ -2204,82 +2813,133 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             do_action(self::HOOK . 'palette_metabox', $this);
         }
 
-        public function print_default_options() {
-            $tabindex = 9;
-            $grid_type = get_option(self::GRID_TYPE, self::DEFAULT_GRID_TYPE);
-            $visual = get_option(self::VISUAL);
-            $customizer = get_option(self::CUSTOMIZER);
-            if ($grid_type == 'palette') {
-                $visual = true;
-            }
-
-            print "
-<p id='kt_visual_option'>
-  <input type='checkbox' id='kt_visual' name='kt_visual' tabindex='$tabindex' value='1'" . checked($visual, 1, 0) . " />
-  <label for='kt_visual'>" . esc_html__('Add to Visual Editor', 'kt-tinymce-color-grid') . "</label>
-</p>
-<p>
-  <input type='checkbox' id='kt_customizer' name='kt_customizer' tabindex='$tabindex' value='1'" . checked($customizer, 1, 0) . " />
-  <label for='kt_customizer'>" . esc_html__('Add to Theme Customizer', 'kt-tinymce-color-grid') . "</label>
-</p>";
-        }
-
-        public function print_integration_options() {
+        /**
+         * Print external integration forms fields
+         * @since 2.0
+         * @ignore
+         */
+        public function print_integration_forms() {
             $_label = __('Integrate with %s', 'kt-tinymce-color-grid');
             $integrations = $this->get_integrations();
             uasort($integrations, array($this, 'sort_integrations'));
             foreach ($integrations as $id => $integration) {
-                if (!$this->integration_enabled($id)) {
+                if (!$this->is_integration_enabled($id) || $this->is_native_integration($id)) {
                     continue;
                 }
 
+                $args = isset($integration['args']) ? $integration['args'] : $this;
+
                 print "
 <p class='integrate-wrap' id='kt_integrate_{$id}_wrap'>";
-                if (isset($integration['form'])) {
-                    $form = $integration['form'];
-                    if (is_callable($form)) {
-                        $form = call_user_func($form, $this, $id);
-                    }
-                    print $form;
-                } else {
-                    $checked = $this->integration_active($id) ? ' checked="checked"' : '';
+                if ($integration['checkbox']) {
+                    $checked = $this->is_integration_active($id) ? ' checked="checked"' : '';
                     if (isset($integration['label'])) {
                         $label = $integration['label'];
+                        if (is_callable($label)) {
+                            $label = $this->call($label, $args);
+                        }
                     } else {
-                        $label = sprintf($_label, $integration['name']);
+                        $label = esc_html(sprintf($_label, $integration['name']));
                     }
                     printf('
   <input type="checkbox" id="kt_integrate_%1$s" name="kt_integrate[]" tabindex="10" value="%1$s"%2$s />
   <label for="kt_integrate_%1$s">%3$s</label>
-', $id, $checked, esc_html($label));
+', $id, $checked, $label);
+                }
+                if ($integration['form']) {
+                    $form = $integration['form'];
+                    if (is_callable($form)) {
+                        $form = $this->call($form, $args);
+                    }
+                    print $form;
                 }
                 print '</p>';
             }
         }
 
+        /**
+         * Callback for sorting integrations by name
+         * @since 2.0
+         * @ignore
+         * @param array $a
+         * @param array $b
+         * @return int
+         */
         public function sort_integrations($a, $b) {
+            if ($a['_internal'] && !$b['_internal']) {
+                return -1;
+            } else if ($b['_internal'] && !$a['_internal']) {
+                return 1;
+            }
             return strnatcasecmp($a['name'], $b['name']);
         }
 
+        /**
+         * Print label for Theme Customizer integration with additional
+         * themes/plugins names appended appropriately
+         * @since 2.0
+         */
+        public function print_customizer_label() {
+            $natives = '';
+            $integrations = $this->get_integrations('name');
+            foreach ($integrations as $id => $name) {
+                if ($this->is_integration_enabled($id) && $this->is_native_integration($id)) {
+                    $natives .= " / $name";
+                }
+            }
+            $label = esc_html__('Add to Theme Customizer', 'kt-tinymce-color-grid');
+            if ($natives !== '') {
+                $label .= $natives;
+            }
+            print $label;
+        }
+
+        public function print_gutenberg_label() {
+            vprintf('<span title="%s">%s <sup style="color:#900">beta!</sup>', array(
+                esc_attr__('Gutenberg is still in development. There will be dragons!', 'kt-tinymce-color-grid'),
+                esc_html__('Integrate with Gutenberg', 'kt-tinymce-color-grid'),
+            ));
+        }
+
+        /**
+         * Print the color editor toolbar
+         * @since 2.0
+         * @ignore
+         */
         public function print_color_toolbar() {
+            print "
+<div id='kt_toolbar' role='toolbar'>";
+
             /**
              * Fires inside the palette toolbar
              * @since 2.0
              * @param kt_Central_Palette $instance
              */
             do_action(self::HOOK . 'palette_toolbar', $this);
+
+            print '
+</div>';
         }
 
+        /**
+         * Print the toolbar button for adding a color
+         * @since 2.0
+         * @ignore
+         */
         public function print_add_color_button() {
             $add_text = __('Add Color', 'kt-tinymce-color-grid');
             print "
-<div id='kt_toolbar' role='toolbar'>
   <button id='kt_add' type='submit' tabindex='8' name='kt_action' value='add' class='button' aria-controls='kt_colors' accesskey='" . _x('A', 'accesskey for adding color', 'kt-tinymce-color-grid') . "' title='" . esc_attr($add_text) . "'>
     <span class='dashicons dashicons-plus-alt2'></span>
     <span class='screen-reader-text'>" . esc_html($add_text) . '</span>
   </button>';
         }
 
+        /**
+         * Print the checkbox for toggle auto-naming
+         * @since 2.0
+         * @ignore
+         */
         public function print_transparency_switch() {
             if ($this->support_alpha()) {
                 $alpha = get_option(self::ALPHA);
@@ -2291,18 +2951,27 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             }
         }
 
+        /**
+         * Print checkbox for toggle transparency UI
+         * @since 2.0
+         * @ignore
+         */
         public function print_autoname_switch() {
-            $use_autoname = $this->cookie(self::AUTONAME, self::DEFAULT_AUTONAME);
+            $use_autoname = $this->get_cookie(self::AUTONAME, self::DEFAULT_AUTONAME);
             print "
   <span class='switch-wrap alignright hide-if-no-js'>
     <input type='checkbox' id='kt_autoname'" . checked($use_autoname, 1, 0) . "/>
     <label for='kt_autoname'>" . esc_html__('Automatic Names', 'kt-tinymce-color-grid') . '</label>
-  </span>
-</div>';
+  </span>';
         }
 
+        /**
+         * Print the color editor
+         * @since 2.0
+         * @ignore
+         */
         public function print_color_editor() {
-            $autoname = $this->cookie(self::AUTONAME, self::DEFAULT_AUTONAME) ? ' class="autoname"' : '';
+            $autoname = $this->get_cookie(self::AUTONAME, self::DEFAULT_AUTONAME) ? ' class="autoname"' : '';
             print "
 <div id='kt_color_editor' data-empty='" . esc_attr__('Palette is empty', 'kt-tinymce-color-grid') . "'$autoname>";
 
@@ -2333,11 +3002,12 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
   <input class="alpha" type="number" name="kt_alphas[]" tabindex="3" value="%3$s" min="0" max="100" step="1" autocomplete="off" aria-label="%11$s" title="%16$s" />
   <span class="screen-reader-text">%13$s</span>
   <input class="name%6$s" type="text" name="kt_names[]" value="%4$s" tabindex="3" placeholder="%12$s" aria-label="%13$s" />
+  <input class="ntc_name" type="hidden" name="kt_ntc_names[]" value="%18$s" />
   <button type="button" class="autoname button hide-if-no-js" title="%17$s">
     <i class="dashicons dashicons-editor-break"></i>
     <span class="screen-reader-text">%17$s</span>
   </button>
-  <button type="submit" name="kt_action" value="remove-%5$s" tabindex="3" class="remove button title="%14$s"">
+  <button type="submit" name="kt_action" value="remove-%5$s" tabindex="3" class="remove button" title="%14$s"">
     <i class="dashicons dashicons-no-alt"></i>
     <span class="screen-reader-text">%14$s</span>
   </button>
@@ -2348,27 +3018,45 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
                 8 => esc_attr__('Color Picker', 'kt-tinymce-color-grid'),
                 9 => esc_attr__('Hexadecimal Color', 'kt-tinymce-color-grid'),
                 10 => esc_attr__('Transparency', 'kt-tinymce-color-grid'),
-                11 => esc_attr__('Unnamed Color', 'kt-tinymce-color-grid'),
+                11 => '%7$s', // placeholder
                 12 => esc_attr__('Name of Color', 'kt-tinymce-color-grid'),
                 13 => esc_html__('Delete', 'kt-tinymce-color-grid'),
                 14 => esc_attr__('Three hexadecimal numbers between 00 and FF', 'kt-tinymce-color-grid'),
                 15 => esc_attr__('Transparency between 0 and 100', 'kt-tinymce-color-grid'),
                 16 => esc_attr__('Automatic Name', 'kt-tinymce-color-grid'),
+                17 => '%8$s', // slug
             ));
 
+            $placeholder = esc_attr__('Unnamed Color', 'kt-tinymce-color-grid');
             $palette = get_option(self::PALETTE, array());
             foreach ($palette as $index => $set) {
-                $set = array_map('esc_attr', $set);
-                extract($set, EXTR_PREFIX_ALL, 'c');
-                $autofill = $c_name ? '' : ' autoname';
-                $rgba = $this->hex2rgba($c_color, $c_alpha);
-                printf($list_entry, $c_color, $rgba, $c_alpha, $c_name, $index, $autofill);
+                $color = $set['color'];
+                $alpha = $set['alpha'];
+                $name = $set['name'];
+                $slug = $set['slug'];
+                vprintf($list_entry, array(
+                    esc_attr($color),
+                    $this->hex2rgba($color, $alpha),
+                    esc_attr($alpha),
+                    esc_attr($name),
+                    $index,
+                    $name ? '' : ' autofill',
+                    $placeholder,
+                    esc_attr($slug),
+                ));
             }
 
-            print '</div>
-<script type="text/template" id="tmpl-kt_list_entry">';
-            printf($list_entry, '#000000', 'rgba(0,0,0,1)', 100, '', 'x', ' autoname');
-            print '</script>';
+            vprintf("</div>
+<script type='text/template' id='tmpl-kt_list_entry'>$list_entry</script>", array(
+                '#000000',
+                'rgba(0,0,0,1)',
+                100,
+                '',
+                'x',
+                ' autoname',
+                'Black',
+                'Black',
+            ));
         }
 
         /**
@@ -2377,46 +3065,220 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
          * @ignore
          */
         public function print_backup_metabox() {
-            print '
-<p>' . esc_html__('What would you like to backup?', 'kt-tinymce-color-grid') . "</p>
-<p id='kt_export'>";
+            /**
+             * Fires inside the backup metabox
+             * @since 2.0
+             * @param kt_Central_Palette $instance
+             */
+            do_action(self::HOOK . 'backup_metabox', $this);
+        }
 
-            $parts = array(
-                'settings' => __('Settings', 'kt-tinymce-color-grid'),
-                'palette' => __('Palette', 'kt-tinymce-color-grid'),
-            );
-            foreach ($parts as $key => $label) {
-                $checked = $this->cookie("kt_export_$key", 1);
-                $key = esc_attr($key);
+        function print_export_form() {
+            print '
+<p>' . esc_html__('Here you can download an export.', 'kt-tinymce-color-grid') . '</p>';
+            $formats = $this->get_export_formats();
+            $labels = '';
+            $current_format = $this->get_cookie('kt_export_format', 'base64');
+            foreach ($formats as $id => $format) {
+                $for = "kt_export_format_$id";
+                $label = esc_html($format['name']);
                 print "
-  <input type='checkbox' id='kt_export_$key' name='kt_export[]' value='$key'" . checked($checked, 1, 0) . "/>
-  <label for='kt_export_$key'>" . esc_html($label) . "</label>";
+<input type='radio' id='$for' name='kt_export_format' value='$id'" . checked($id, $current_format, false) . " />
+<label for='$for' class='screen-reader-text'>$label</label>";
+                $labels .= "
+    <label for='$for' class='button'>$label</label>
+    <label for='$for' class='button button-primary'>$label</label>";
+            }
+            print '
+<p id="kt_export_format_wrap">
+  <label for="kt_export_format">' . esc_html__('Format', 'kt-tinymce-color-grid') . '</label>
+  <span class="button-group toggle-button-group">' . $labels . '
+  </span>
+</p>';
+
+            $printed = array();
+            $styles = '';
+            foreach ($formats as $id => $format) {
+                $form = $format['form'];
+                if (!$form) {
+                    continue;
+                }
+
+                if (is_callable($form)) {
+                    $args = isset($format['args']) ? $format['args'] : $this;
+                    $form = $this->call($form, $args);
+                }
+
+                $form_id = false;
+                if ($form) {
+                    $form_id = $id;
+                    $printed[$id] = $format['form'];
+                    print "
+<div id='kt_export_format_{$id}_form' class='export-format-form'>$form</div>";
+                } else if (in_array($format['form'], $printed)) {
+                    $keys = array_keys($printed, $format['form']);
+                    $form_id = array_shift($keys);
+                }
+
+                $radio_id = "kt_export_format_$id";
+                $styles .= "
+#$radio_id:checked ~ #kt_export_format_wrap .button[for='$radio_id'] {
+  display: none }
+#$radio_id:checked ~ #kt_export_format_wrap .button-primary[for='$radio_id'] {
+  display: inline-block }";
+                if ($form_id) {
+                    $styles .= "
+#$radio_id:checked ~ #kt_export_format_{$form_id}_form {
+  display: block }";
+                }
             }
 
             print "
-</p>
-<p class='devider'><button type=submit' id='kt_action_export' class='button' name='kt_action' value='export' tabindex='9'>" . esc_html__('Download Backup', 'kt-tinymce-color-grid') . '</button></p>';
+<style type='text/css'>$styles
+</style>";
 
+            print "
+<p><button type=submit' id='kt_action_export' class='button' name='kt_action' value='export' tabindex='9'>" . esc_html__('Download Export', 'kt-tinymce-color-grid') . '</button></p>
+<hr/>';
+        }
+
+        function print_import_form() {
+            print '
+<p>';
             if ($this->can_upload()) {
-                print "
-<p>" . esc_html__('Here you can upload a backup.', 'kt-tinymce-color-grid') . "</p>
-<p class='hide-if-no-js'>
-  <label id='kt_upload_label' for='kt_upload' class='button' tabindex='10'>
-    <span class='spinner'></span>
-    <span class='label'>" . esc_html__('Choose Backup', 'kt-tinymce-color-grid') . "&hellip;</span>
-    <span class='loading'>" . esc_html__('Uploading', 'kt-tinymce-color-grid') . "&hellip;</span>
+                print esc_html__('Here you can upload an import.', 'kt-tinymce-color-grid') . '</p>
+<p class="hide-if-no-js">
+  <label id="kt_upload_label" for="kt_upload" class="button" tabindex="10">
+    <span class="spinner"></span>
+    <span class="label">' . esc_html__('Choose Import', 'kt-tinymce-color-grid') . '&hellip;</span>
+    <span class="loading">' . esc_html__('Uploading', 'kt-tinymce-color-grid') . '&hellip;</span>
   </label>
 </p>
-<p class='hide-if-js'>
-  <input type='file' id='kt_upload' name='kt_upload' accept='.bak,text/plain'/>";
+<p class="hide-if-js"><input type="file" id="kt_upload" name="kt_upload" /></p>
+<p class="hide-if-js"><button type="submit" id="kt_action_import" class="button" name="kt_action" value="import" tabindex="9">' . esc_html__('Download Export', 'kt-tinymce-color-grid') . '</button>';
             } else {
-                print "
-<p>" . esc_html__('Your device is not supporting file uploads. Open your backup in a simple text editor and paste its content into this textfield.', 'kt-tinymce-color-grid') . "</p>
-<p><textarea name='kt_import' class='widefat' rows='5'></textarea></p>
-<p><button type='submit' class='button' name='kt_action' value='import' tabindex='10'>" . esc_html__('Upload Backup', 'kt-tinymce-color-grid') . "</button>";
+                print esc_html__('Your device is not supporting file uploads. Open your import in a simple text editor and paste its content into this textfield.', 'kt-tinymce-color-grid') . '</p>
+<p><textarea name="kt_import" class="widefat" rows="5"></textarea></p>
+<p><button type="submit" class="button" name="kt_action" value="import" tabindex="10">' . esc_html__('Import', 'kt-tinymce-color-grid') . '</button>';
             }
             print '
 </p>';
+        }
+
+        function print_base64_export_form() {
+            static $printed = false;
+            if ($printed) {
+                return;
+            }
+            $printed = true;
+
+            $partials = array(
+                'settings' => __('Settings', 'kt-tinymce-color-grid'),
+                'palette' => __('Palette', 'kt-tinymce-color-grid'),
+            );
+
+            /**
+             * Filters the backup partials
+             * @since 2.0
+             * @param array $partials
+             */
+            $partials = apply_filters(self::HOOK . 'partials', $partials);
+
+            if ($partials) {
+                print '
+<p>';
+                foreach ($partials as $key => $label) {
+                    $key = esc_attr($key);
+                    $partial = "kt_export_{$key}";
+                    $checked = $this->get_cookie($partial, 1);
+                    print "
+  <input type='checkbox' id='$partial' name='kt_export[]' value='$key'" . checked($checked, 1, 0) . "/>
+  <label for='$partial'>" . esc_html($label) . "</label>";
+                }
+                print '
+</p>';
+            }
+        }
+
+        protected function get_preview_color() {
+            $colors = array(
+                array('pomgranate', 'E64B17', '230, 75, 23, 0.57'),
+                array('indigo', '4469C8', '68, 105, 200, 0.11'),
+                array('emerald', '51C556', '81, 197, 86, 0.82'),
+                array('amethyst', '9B44C8', '155, 68, 200, 0.41'),
+                array('irish-coffee', '6A3526', '106, 53, 38, 0.68'),
+            );
+            static $i = null;
+            if (!$i) {
+                $i = array_rand($colors);
+            }
+            return $colors[$i];
+        }
+
+        function print_css_export_form() {
+            static $printed = false;
+            if ($printed) {
+                return;
+            }
+            $printed = true;
+
+            $affixes = array(
+                'prefix' => __('Class Prefix', 'kt-tinymce-color-grid'),
+                'suffix' => __('Class Suffix', 'kt-tinymce-color-grid'),
+            );
+            $_none = __('None', 'kt-tinymce-color-grid');
+            foreach ($affixes as $affix => $label) {
+                $id = "kt_export_css_{$affix}";
+                $cookie = esc_attr($this->get_cookie($id));
+                $label = esc_html($label);
+                print "
+<p>
+  <label for='$id'>$label</label>
+  <input type='text' id='$id' name='$id' value='$cookie' placeholder='$_none' />
+</p>";
+            }
+
+            $alpha = 'kt_export_css_alpha';
+            list($key, $hex, $rgba) = $this->get_preview_color();
+            $alpha_checked = checked($this->get_cookie($alpha), 1, false);
+            print "
+<p>
+  <input type='checkbox' id='$alpha' name='$alpha' value='1'$alpha_checked />
+  <label for='$alpha'>" . esc_html__('Add Transparency Values', 'kt-tinymce-color-grid') . "</label>
+</p>
+<div id='kt_export_css_preview' class='export-preview'>
+  <strong>" . esc_html__('Preview', 'kt-tinymce-color-grid') . "</strong>
+  <pre></pre>
+</div>
+<script type='text/template' id='tmpl-kt_export_css_preview'>.{{ data.prefix }}$key{{ data.suffix }} {
+  color: #$hex<# if (data.alpha) { #>;
+  color: rgba($rgba)<# } #> }
+</script>";
+        }
+
+        function print_scss_export_form() {
+            $affixes = array(
+                'prefix' => __('Variable Prefix', 'kt-tinymce-color-grid'),
+                'suffix' => __('Variable Suffix', 'kt-tinymce-color-grid'),
+            );
+            $_none = __('None', 'kt-tinymce-color-grid');
+            foreach ($affixes as $affix => $label) {
+                $id = "kt_export_scss_{$affix}";
+                $cookie = esc_attr($this->get_cookie($id));
+                $label = esc_html($label);
+                print "
+<p>
+  <label for='$id'>$label</label>
+  <input type='text' id='$id' name='$id' value='$cookie' placeholder='$_none' />
+</p>";
+            }
+            list($key, $_, $rgba) = $this->get_preview_color();
+            print "
+<div id='kt_export_scss_preview' class='export-preview'>
+  <strong>" . esc_html__('Preview', 'kt-tinymce-color-grid') . "</strong>
+  <pre></pre>
+</div>
+<script type='text/template' id='tmpl-kt_export_scss_preview'>\${{ data.prefix }}$key{{ data.suffix }}: rgba($rgba);</script>";
         }
 
         /**
@@ -2478,7 +3340,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
          * @param string|null $default Default value if cookie is not set
          * @return string
          */
-        protected function cookie($name, $default = null) {
+        protected function get_cookie($name, $default = null) {
             return isset($_COOKIE[$name]) ? $_COOKIE[$name] : $default;
         }
 
@@ -2500,9 +3362,34 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
         }
 
         /**
+         * Call a callable.
+         *
+         * Suppresses any printed output and returns those instead.
+         * @since 2.0
+         * @ignore
+         * @param callable $fn
+         * @return mixed
+         */
+        protected function call($fn) {
+            $args = func_get_args();
+            array_pop($args);
+            if (!is_callable($fn)) {
+                return null;
+            }
+            ob_start();
+            $return = call_user_func_array($fn, $args);
+            $print = ob_get_contents();
+            ob_end_clean();
+            if ($print !== '') {
+                return $print;
+            }
+            return $return;
+        }
+
+        /**
          * Sanitize a string to #RRGGBB
          * @since 1.4
-         * @since 2.0 prepends a #
+         * @since 2.0 optionally prepends a #
          * @param string $string String to be checked
          * @param boolean $prepend_hash [optional] Prepend resulting string with a hash
          * @return string|boolean Returns a color of #RRGGBB or false on failure
@@ -2510,7 +3397,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
         public function sanitize_color($string, $prepend_hash = true) {
             $string = strtoupper($string);
             $hex = null;
-            if (preg_match('~([0-9A-F]{6}|[0-9A-F]{3})~', $string, $hex)) {
+            if (preg_match('~#?([0-9A-F]{6}|[0-9A-F]{3})~', $string, $hex)) {
                 $hex = $hex[1];
                 if (strlen($hex) == 3) {
                     $hex = preg_replace('~[0-9A-F]~', '\1\1', $hex);
@@ -2576,7 +3463,8 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             if (--$hue < 1) {
                 return array($hue, 0, 1);
             }
-            return array(1, 0, 1 - --$hue);
+            $hue--;
+            return array(1, 0, 1 - $hue);
         }
 
         /**
@@ -2596,7 +3484,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
         }
 
         /**
-         * Convert a HEX string and a alpha value into RGBA() notation
+         * Convert a HEX string and an alpha value into RGBA notation
          * @param string $hex Hexadecimal color
          * @param int $alpha Alpha value [0..100]
          * @return string
@@ -2612,10 +3500,4 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
     }
 
     kt_Central_Palette::instance();
-}
-
-function xmp($in) {
-    print '<xmp>';
-    print_r($in);
-    print '</xmp>';
 }

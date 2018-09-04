@@ -1,7 +1,7 @@
 $bar_bg: #FDFDFD;
 $border_color: #E5E5E5;
 $focus_color: #5B9DD9;
-$width: 600px;
+$width: 680px;
 
 
 #kt_picker {
@@ -72,7 +72,7 @@ body.js #kt_color_grid.support-alpha #kt_picker {
 
 
 
-input[name='kt_type'] {
+input[name='kt_type'], input[name='kt_export_format'] {
     display: none;
 }
 
@@ -89,8 +89,8 @@ input[name='kt_type'] {
     .hndle {
         cursor: default;
     }
-    p, .inside label {
-        font-size: 14px;
+    p, .inside label:not(.button) {
+        font-size: 13px;
     }
     p {
         padding: 0 1em;
@@ -120,37 +120,37 @@ input[name='kt_type'] {
         margin-bottom: 1em !important;
     }
 }
-#kt_grid_metabox {
-    .button-group label.button {
-        margin-right: -1px;
+.toggle-button-group {
+    label.button {
+        margin-right: -1px !important;
         float: left;
         -webit-box-shadow: none;
         box-shadow: none;
     }
-    .type-chooser {
-        .button-primary {
-            position: relative;
-            display: none;
-            z-index: 2;
-        }
-        $radius: 4px;
-        .button:first-child, .button:nth-child(2) {
-            border-radius: $radius 0 0 $radius;
-        }
-        .button:nth-last-child(2), .button:last-child {
-            border-radius: 0 $radius $radius 0;
-        }
-    }
-    .grid-type-form {
+    &.button-group .button-primary {
+        position: relative;
         display: none;
+        z-index: 2;
+    }
+    $radius: 4px;
+    .button:first-child, .button:nth-child(2) {
+        border-radius: $radius 0 0 $radius;
+    }
+    .button:nth-last-child(2), .button:last-child {
+        border-radius: 0 $radius $radius 0;
     }
 }
-#kt_backup_metabox {
-    .devider {
-        padding-bottom: 1em;
-        border-bottom: 1px solid $border_color;
-    }
+
+#kt_grid_metabox .grid-type-form,
+#kt_backup_metabox .export-format-form,
+#kt_backup_metabox .export-preview {
+    display: none;
 }
+#kt_backup_metabox .export-format-form {
+    position: relative;
+    margin-bottom: 1.5em;
+}
+
 #kt_upload_label {
     .spinner {
         margin: 3px 8px 0 0;
@@ -173,7 +173,7 @@ input[name='kt_type'] {
         }
     }
 }
-#kt_grid_type_default:checked ~ .meta-box-sortables #kt_visual_option {
+#kt_grid_type_default:checked ~ .meta-box-sortables #kt_integrate_tinymce_wrap {
     display: none;
 }
 #kt_clamp {
@@ -408,11 +408,11 @@ body.no-js #kt_color_editor {
             width: 70px;
         }
         .name {
-            width: 277px;
+            width: 357px;
         }
     }
     body.no-js #kt_color_grid.support-alpha #kt_color_editor .name {
-        width: 222px;
+        width: 302px;
     }
     body.js #kt_color_editor {
         .color {
@@ -422,7 +422,7 @@ body.no-js #kt_color_editor {
             margin-right: 30px;
         }
         .name {
-            width: 346px;
+            width: 466px;
         }
         .picker {
             cursor: move;
@@ -438,12 +438,31 @@ body.no-js #kt_color_editor {
             padding-right: 40px;
         }
     }
+    body.js #kt_backup_metabox .export-preview {
+        display: block;
+        position: absolute;
+        top: 0;
+        right: 1.3em;
+        width: 300px;
+        strong {
+            color: #999;
+        }
+        pre {
+            margin: .2em 0;
+            padding: .4em;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            font: .84em monospace;
+            color: #237;
+            white-space: pre-wrap;
+        }
+    }
     body.no-js #kt_color_editor {
         .remove {
             margin-right: 13px;
         }
         .name {
-            width: 291px;
+            width: 371px;
         }
         .sample {
             width: 36px;
@@ -542,10 +561,10 @@ body.rtl {
             margin-left: .5em;
             margin-right: 1em;
         }
-        .button-group label.button {
-            margin-left: -1px;
-            float: right;
-        }
+    }
+    .toggle-button-group label.button {
+        margin-left: -1px !important;
+        float: right;
     }
     #kt_color_editor {
         .picker, .picker-placeholder {

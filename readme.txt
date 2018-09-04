@@ -2,7 +2,7 @@
 Contributors: kungtiger
 Requires at least: 3.5
 Tested up to: 4.9
-Stable tag: 2.0
+Stable tag: 1.12.5
 Requires PHP: 5.3
 Tags: color, customizer, editor, iris, palette, picker, tinymce
 License: GPLv2 or later
@@ -17,10 +17,15 @@ This plugin replaces the color picker for choosing a text or background color fo
 **Theme/Plugin Support**
 Central Color Palette supports these plugins and themes:
 
+- [Astra Theme](https://wpastra.com)
 - [Beaver Builder](https://www.wpbeaverbuilder.com)
 - [Elementor](https://wordpress.org/plugins/elementor)
 - [GeneratePress Premium](https://generatepress.com/premium)
 - [OceanWP](https://oceanwp.org)
+- [Page Builder Framework](https://wp-pagebuilderframework.com)
+
+== Privacy Policy ==
+This plugin does not collect or use any private data.
 
 == Installation ==
 
@@ -58,6 +63,25 @@ Please [contact me](http://wordpress.org/support/plugin/kt-tinymce-color-grid) a
 
 == Changelog ==
 
+= 1.12.5 =
+Fixed faulty output on palette save (thanks to @cavalierlife)
+
+= 1.12.4 =
+Fixed unstable integration with Elementor (thanks to @eplanet)
+
+= 1.12.3 =
+- Fixed dynamic styles interfering with other parts of TinyMCE (thanks to @jb2386)
+- Added credits to changelog of all those who contributed
+- Added GDPR notice to readme
+
+= 1.12.2 =
+- Clarified what "Add to Customizer" does
+- Added support for [Astra Theme](https://wpastra.com)
+- Added support for [Page Builder Framework](https://wp-pagebuilderframework.com)
+
+= 1.12.1 =
+Fixed a bug where opacity values are displayed instead of color names
+
 = 1.12 =
 - Added support for [Beaver Builder](https://www.wpbeaverbuilder.com)
 - Fixed some bugs and typos
@@ -68,42 +92,42 @@ Please [contact me](http://wordpress.org/support/plugin/kt-tinymce-color-grid) a
 - Removed palette import, it's to buggy.
 
 = 1.10 =
-- Added support for [Elementor](https://wordpress.org/plugins/elementor)
-- Added support for [GeneratePress Premium](https://generatepress.com/premium)
+- Added support for [Elementor](https://wordpress.org/plugins/elementor) (thanks to @blackeye0013)
+- Added support for [GeneratePress Premium](https://generatepress.com/premium) (thanks to @eplanet)
 
 = 1.9.3 =
-- Fixed fatal error when updating from an older version than 1.6
+- Fixed fatal error when updating from an older version than 1.6 (thanks to @flixflix)
 - Removed dependancy on farbtastic; now the color picker ships self-contained
 
 = 1.9.2 =
 Corrected some palette import bugs
 
 = 1.9.1 =
-Fixed fatal error due to missing wp_is_mobile on network installations of WordPress
+Fixed fatal error due to missing wp_is_mobile on network installations of WordPress (thanks to @kzeni)
 
 = 1.9 =
 - Import third party palettes
-- Automatic color names thanks to Chirag Mehta's [Name that Color](http://chir.ag/projects/ntc)
+- Automatic color names thanks to Chirag Mehta's [Name that Color](http://chir.ag/projects/ntc) and @flixflix
 - Improved backup
 
 = 1.8 =
-- All settings and the palette can now be exported and imported
-- Added new grid type: only central palette for TinyMCE
+- All settings and the palette can now be exported and imported (suggested by @sigersmit)
+- Added new grid type: only central palette for TinyMCE (suggested by @jhned)
 - Added CSS for right-to-left locales
 
 = 1.7.2 =
-- Fixes JavaSript bug
-- Fixes conflict with Poedit
+- Fixes JavaSript bug (thanks to @hrohh)
+- Fixes conflict with Poedit (thanks to @hrohh)
 
 = 1.7.1 =
 Corrected typos and some translation strings
 
 = 1.7 =
-- Theme Customizer support added
+- Theme Customizer support added (thanks to @kzeni)
 - Color grid is now adjustable in type and size
 
 = 1.6.1 =
-Fixed hidden colors after defining more than 13 colors
+Fixed hidden colors after defining more than 13 colors (thanks to @wlashack)
 
 = 1.6 =
 - Useability improvements
@@ -139,7 +163,7 @@ Fixed a broken script
 Changed HTML to conform with WordPress 4.3
 
 = 1.3 =
-Added support for custom persistent colors
+Added support for custom persistent colors (thanks to @cash3p)
 
 = 1.2 =
 Fixes an error when using more than one TinyMCE
@@ -152,6 +176,21 @@ Fixes an error when using more than one TinyMCE
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.12.5
+Fixes faulty output on palette save
+
+= 1.12.4 =
+Fixes unstable integration with Elementor
+
+= 1.12.3 =
+Fixes dynamic styles for color pickers interfering with other parts of TinyMCE
+
+= 1.12.2 =
+Support for Astra Theme and Page Builder Framework added
+
+= 1.12.1 =
+Fixes a small bug where color names do not show up correctly
 
 = 1.12 =
 Adds color integration for Beaver Builder
