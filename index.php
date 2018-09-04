@@ -2002,9 +2002,9 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = [' . $colors . '];
             }
 
             $filename = $this->get_export_filename($format);
-            #header('Content-Type: plain/text');
-            #header('Content-Disposition: attachment; filename="' . $filename . '"');
-            print '<xmp>'.$payload;
+            header('Content-Type: plain/text');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            #print '<xmp>'.$payload;
             exit;
         }
 
