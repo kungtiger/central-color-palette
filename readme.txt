@@ -1,18 +1,22 @@
 === Central Color Palette ===
 Contributors: kungtiger
 Requires at least: 3.5
-Tested up to: 4.9
-Stable tag: 1.12.5
+Tested up to: 5.0
+Stable tag: 1.13.1
 Requires PHP: 5.3
-Tags: color, customizer, editor, iris, palette, picker, tinymce
+Tags: color, customizer, editor, gutenberg, palette, picker, tinymce
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Take full control over color pickers of TinyMCE and the palette of the Theme Customizer. Create a central color palette for an uniform look'n'feel!
+Manage a site-wide central color palette for an uniform look'n'feel! Supports the new Block Editor, Theme Customizer and many themes and plugins.
 
 == Description ==
 
-This plugin replaces the color picker for choosing a text or background color found inside the TinyMCE toolbar with a bigger and customizable color grid. The palette of the color picker found especially in the Theme Customizer can also be set through a central palette. You can define this central color palette through the settings menu. All plugins that make use of WordPress' color picker can benefit from this plugin as well.
+This plugin allows you to manage a site-wide central color palette for an uniform look'n'feel. The palette of the new Block Editor and the Theme Customizer are supported, as well as the Classic Editor. You can define this central color palette through the settings menu. All plugins that make use of WordPress' color picker can benefit from this plugin as well.
+
+Also this plugin replaces the color picker for choosing a text or background color found inside the Classic Editor with a bigger and customizable color grid.
+
+For an easy migration between WordPress installations you can export and import your palette settings and colors.
 
 **Theme/Plugin Support**
 Central Color Palette supports these plugins and themes:
@@ -57,11 +61,28 @@ Please [contact me](http://wordpress.org/support/plugin/kt-tinymce-color-grid) a
 
 == Screenshots ==
 
-1. Bigger TinyMCE color selector
-2. Customizer support since plugin version 1.7
-3. Color palette editor
+1. The Color Palette Editor
+2. The new Block Editor is supported
+3. Custom palette for the Theme Customizer
+4. Legacy support for the Classic Editor
 
 == Changelog ==
+
+= 1.13.1 =
+- Fixed broken Import
+- Fixed JavaScript bug
+
+= 1.13 =
+- Added Gutenberg/Block Editor support
+- Transparency channel is now always visible inside the palette editor
+- Transparency can now be toggled individually for those integrations that use it
+- Colors can be deactivated to hide them inside the block editor but retain their assignment on a block level
+- Imports try to reuse existing colors to reduce chaos inside the block editor
+- Added more export formats
+- Added JSON import
+
+= 1.12.6 =
+Customizer palette breaks into rows of 8 colors
 
 = 1.12.5 =
 Fixed faulty output on palette save (thanks to @cavalierlife)
@@ -177,7 +198,16 @@ Initial release.
 
 == Upgrade Notice ==
 
-= 1.12.5
+= 1.13.1 =
+Fixes broken import
+
+= 1.13 =
+Adds Gutenberg/Block Editor support and more export formats
+
+= 1.12.6 =
+Customizer palette breaks into rows of 8 rows
+
+= 1.12.5 =
 Fixes faulty output on palette save
 
 = 1.12.4 =
