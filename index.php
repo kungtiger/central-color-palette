@@ -312,6 +312,14 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             if ($this->supports('gutenberg') && get_option(self::GUTENBERG)) {
                 $this->integrate_gutenberg();
             }
+            
+            if($this->supports('hestia-theme') && get_option(self::CUSTOMIZER)){
+                $this->integrate_hestia();
+            }
+        }
+        
+        protected function integrate_hestia() {
+            
         }
 
         protected function integrate_gutenberg() {
