@@ -4,7 +4,7 @@
  * Plugin Name: Central Color Palette
  * Plugin URI: https://wordpress.org/plugins/kt-tinymce-color-grid
  * Description: Manage a site-wide central color palette for an uniform look'n'feel! Supports the new block editor, theme customizer and many themes and plugins.
- * Version: 1.13.1
+ * Version: 1.13.2
  * Author: Gáravo
  * Author URI: http://profiles.wordpress.org/kungtiger
  * License: GPL2
@@ -13,7 +13,7 @@
  */
 
 if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
-    define('KT_CENTRAL_PALETTE', '1.13.1');
+    define('KT_CENTRAL_PALETTE', '1.13.2');
     define('KT_CENTRAL_PALETTE_DIR', plugin_dir_path(__FILE__));
     define('KT_CENTRAL_PALETTE_URL', plugin_dir_url(__FILE__));
     define('KT_CENTRAL_PALETTE_BASENAME', plugin_basename(__FILE__));
@@ -312,14 +312,16 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             if ($this->supports('gutenberg') && get_option(self::GUTENBERG)) {
                 $this->integrate_gutenberg();
             }
-            
-            if($this->supports('hestia-theme') && get_option(self::CUSTOMIZER)){
-                $this->integrate_hestia();
+
+            if ($this->supports('hestia-theme') && get_option(self::CUSTOMIZER)) {
+                add_filter('hestia_accent_color_palette', array($this, 'hestia_integration'));
             }
         }
-        
-        protected function integrate_hestia() {
-            
+
+        protected function hestia_integration($palette) {
+            return $this->get_colors(array(
+                        'default' => $palette,
+            ));
         }
 
         protected function integrate_gutenberg() {
@@ -571,7 +573,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             if (!$n) {
                 return;
             }
-            
+
             $padding_bottom = (ceil($n / 8) * 23);
 
             print '
@@ -587,7 +589,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
   margin-left: 0 !important;
   clear: left }
 .wp-picker-active .iris-picker .iris-slider {
-  height: '.($padding_bottom + 183).'px !important }
+  height: ' . ($padding_bottom + 183) . 'px !important }
 </style>';
 
             $colors = implode('","', array_map('esc_js', $colors));
@@ -698,7 +700,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             $this->native_palette_support = array(
                 'astra' => __('Astra Theme', 'kt-tinymce-color-grid'),
                 'page-builder-framework' => __('Page Builder Framework', 'kt-tinymce-color-grid'),
-                'hestia-theme' => __('Hestia Theme', 'kt-tinymce-color-grid'),
+                // 'hestia-theme' => __('Hestia Theme', 'kt-tinymce-color-grid'),
                 'neve-theme' => __('Neve Theme', 'kt-tinymce-color-grid'),
             );
 

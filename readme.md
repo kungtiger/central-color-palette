@@ -1,12 +1,12 @@
 # Central Color Palette
 
-**This is the development repository and is not intended for production deployment  
-For production releases please use the WordPress Plugin Repository**
+**This is the development repository and is not intended for production deployment.  
+For production releases please use the WordPress Plugin Repository.**
 
 Contributors: kungtiger  
 Requires at least: 3.5  
 Tested up to: 5.0  
-Stable tag: 1.13.1  
+Stable tag: 1.13.2  
 Requires PHP: 5.3  
 Tags: color, customizer, editor, gutenberg, palette, picker, tinymce  
 License: GPLv2 or later  
@@ -29,5 +29,6 @@ Central Color Palette supports these plugins and themes:
 - [Beaver Builder](https://www.wpbeaverbuilder.com)
 - [Elementor](https://wordpress.org/plugins/elementor)
 - [GeneratePress Premium](https://generatepress.com/premium)
+- [Neve Theme](https://wordpress.org/themes/neve)
 - [OceanWP](https://oceanwp.org)
 - [Page Builder Framework](https://wp-pagebuilderframework.com)

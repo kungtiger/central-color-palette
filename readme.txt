@@ -2,7 +2,7 @@
 Contributors: kungtiger
 Requires at least: 3.5
 Tested up to: 5.0
-Stable tag: 1.13.1
+Stable tag: 1.13.2
 Requires PHP: 5.3
 Tags: color, customizer, editor, gutenberg, palette, picker, tinymce
 License: GPLv2 or later
@@ -25,6 +25,7 @@ Central Color Palette supports these plugins and themes:
 - [Beaver Builder](https://www.wpbeaverbuilder.com)
 - [Elementor](https://wordpress.org/plugins/elementor)
 - [GeneratePress Premium](https://generatepress.com/premium)
+- [Neve Theme](https://wordpress.org/themes/neve)
 - [OceanWP](https://oceanwp.org)
 - [Page Builder Framework](https://wp-pagebuilderframework.com)
 
@@ -67,6 +68,10 @@ Please [contact me](http://wordpress.org/support/plugin/kt-tinymce-color-grid) a
 4. Legacy support for the Classic Editor
 
 == Changelog ==
+
+= 1.13.2 =
+- Fixed incompatibility with Elementor Pro
+- Added support for Neve Theme
 
 = 1.13.1 =
 - Fixed broken Import
@@ -197,6 +202,9 @@ Fixes an error when using more than one TinyMCE
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.13.2 =
+Fixes incompatibility with Elementor Pro and added support for Neve Theme
 
 = 1.13.1 =
 Fixes broken import
