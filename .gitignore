@@ -1,4 +1,4 @@
-_site/
-.sass-cache/
-.jekyll-metadata
-/nbproject/private/
+_site
+.sass-cache
+Gemfile.lock
+*.gem

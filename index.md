@@ -1,22 +1,9 @@
 ---
-title: Welcome
+layout: default
 ---
 
-This is the documentation for Central Color Palette.
+## set_palette( $colors )
 
-#### Todo List
-
-- add template for methods **done**
-- add template for actions **done**
-- add template for filters **done**
-- add template for arguments **done**
-- add template for options **done**
-- add template for callback arguments **done**
-- finish guides
-- implement search
-- add content to docs
-- add cross references
-- add template for examples
-- add change log for docs
-- finish global change log
-- simplify stylesheets
+```php
+kt_Central_Palette::instance()->set_palette( $colors );
+```

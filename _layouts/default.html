@@ -1,115 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ site.lang | default: "en-US" }}">
   <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    {% seo %}
-    <link rel="stylesheet" href="{{ site.baseurl }}/css/main.css">
 
-    <link rel="fluid-icon" href="https://github.com/fluidicon.png" title="GitHub">
-    <link rel="mask-icon" href="https://assets-cdn.github.com/pinned-octocat.svg" color="#000000">
-    <link rel="icon" type="image/x-icon" class="js-site-favicon" href="https://assets-cdn.github.com/favicon.ico">
-
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.1.6/lunr.min.js"></script>
-    <script type="text/javascript">
-var jekyll = {
-url: {{ site.url | jsonify }},
- baseurl: {{ site.baseurl | jsonify }}
-};
-    </script>
-    <script type="text/javascript" src="{{ site.baseurl }}/js/main.js"></script>
+    <link rel="stylesheet" href="{{ "/assets/css/style.css?v=" | append: site.github.build_revision | relative_url }}">
+    <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <![endif]-->
   </head>
-
   <body>
-    <section id="sidebar">
-      <h1>
-        <a href="{{ site.baseurl }}/">
-          <span class="icon icon-github"></span>
-          <span class="site-title">{{ site.title }}</span>
-        </a>
-        <button type="button" id="menu"></button>
-      </h1>
+    <div class="wrapper">
+      <header>
+        <h1><a href="{{ "/" | absolute_url }}">{{ site.title | default: site.github.repository_name }}</a></h1>
+        
+        <img src="{{site.logo | relative_url}}" alt="Logo" />
 
-      {%if site.searchable %}
-      <form id="search" action="{{ site.baseurl }}/search/" method="get">
-        <input type="text" name="q" id="q" placeholder="Search">
-        <input type="submit" value="Search" style="display: none;">
-      </form>
-      {%endif%}
+        <p>{{ site.description | default: site.github.project_tagline }}</p>
 
-      <nav>
-        <ul>
-          <li class="nav-item top-level{% if page.url == '/' %} current{% endif %}">
-            {% assign home = site.html_pages | where: 'url', '/' | first %}
-            <a href="{{ site.baseurl }}/">{{ home.title }}</a>
-          </li>
-          {% assign items = site.guides | sort: "order" %}
-          {% for item in items %}
-          <li class="{% if item.url == page.url %}current{% endif %}">
-            <a href="{{ site.baseurl }}{{ item.url }}">{% if item.navigation %}{{ item.navigation }}{% else %}{{ item.title }}{% endif %}</a>
-          </li>
-          {% endfor %}
-        </ul>
+        <p class="view"><a href="https://wordpress.org/plugins/kt-tinymce-color-grid">View the Plugin page</a></p>
+      </header>
+      <section>
 
-        {% assign grouped = site.docs | group_by:"priority" | sort:"name" %}
-        {% for group in grouped %}
-        <ul class="monospaced">
-          {% assign items = group.items | sort: "title" %}
-          {% for item in items %}
-          <li class="{% if item.url == page.url %}current{% endif %}">
-            <a href="{{ site.baseurl }}{{ item.url }}">
-              {% assign char = item.category | slice:0 | upcase %}
-              {% if item.category %}<span class="badge badge-{{ item.category }}">{{ char }}</span>{% endif %}
-              <span class="label">{% if item.navigation %}{{ item.navigation }}{% else %}{{ item.title }}{% endif %}</span>
-            </a>
-          </li>
-          {% endfor %}
-        </ul>
-        {% endfor %}
+      {{ content }}
 
-        <!--<ul>
-          <li class="{% if page.url == '/changelog/' %}current{% endif %}">
-            {% assign changelog = site.html_pages | where: 'url', '/changelog/' | first %}
-            <a href="{{ site.baseurl }}/changelog/">{{ changelog.title }}</a>
-          </li>
-        </ul>-->
-      </nav>
-    </section>
-
-    <section id="content">
-      <aside>
-        <span class="links">
-          <a href="{{ site.wordpress.plugin_url }}">
-            <span class="icon icon-wordpress"></span>
-            <span class="label">Plugin Page</span>
-          </a>
-          <a href="{{ site.wordpress.download_url }}">
-            <span class="icon icon-download"></span>
-            <span class="label">Download</span>
-          </a>
-          <a href="{{ site.github.repository_url }}">
-            <span class="icon icon-github"></span>
-            <span class="label">GitHub</span>
-          </a>
-          <a href="{{ site.github.issues_url }}">
-            <span class="icon icon-issue"></span>
-            <span class="label">Issues</span>
-          </a>
-        </span>
-        <span id="meta">
-          Last updated {{site.time | date_to_string}}
-        </span>
-      </aside>
-
-      <main>
-        {% if page.category %}
-        {% include {{ page.category }}.html %}
-        {% else %}
-        <h2>{{page.title}}</h2>
-        {{ content }}
-        {% endif %}
-      </main>
-    </section>
+      </section>
+    </div>
+    <script src="{{ "/assets/js/scale.fix.js" | relative_url }}"></script>
   </body>
 </html>
