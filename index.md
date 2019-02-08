@@ -91,7 +91,7 @@ Convert a integer to a string in hexadecimal notation.
 kt_Central_Palette::instance()->int2hex(0);     // 00
 kt_Central_Palette::instance()->int2hex(76);    // 4C
 kt_Central_Palette::instance()->int2hex(255);   // FF
-kt_C
+```
 
 ## rgb2hex( $rgb [, $as_floats [, $prepend_hash ]] )
 
