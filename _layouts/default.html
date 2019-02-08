@@ -12,15 +12,7 @@
   </head>
   <body>
     <div class="wrapper">
-      <header>
-        <h1><a href="{{ "/" | absolute_url }}">{{ site.title | default: site.github.repository_name }}</a></h1>
-        
-        <img src="{{site.logo | relative_url}}" alt="Logo" />
-
-        <p>{{ site.description | default: site.github.project_tagline }}</p>
-
-        <p class="view"><a href="https://wordpress.org/plugins/kt-tinymce-color-grid">View the Plugin page</a></p>
-      </header>
+      <h1><a href="{{ "/" | absolute_url }}">{{ site.title | default: site.github.repository_name }}</a></h1>
       <section>
 
       {{ content }}
