@@ -6,13 +6,13 @@ layout: default
 
 Get the colors of the central palette.
 
-| Option | Type | Description |
-|:-------|:-----|:------------|
-| `alpha` | bool | a |
-| `min` | bool|int | a |
-| `pad` | string | a |
-| `hash` | bool | a |
-| `default` | mixed | a |
+Option | Type | Default | Description
+------ | ---- | ------- | -----------
+`alpha` | bool | `false` | If `true` and a colors of the palette has a transparency less than 100 the color will be returned inCSS `rgba()` notation
+`min` | bool or int | `false` | The number of colors that should at least be returned
+`pad` | string | `"#FFFFFF"` | If the palette has less than `min` colors pad by this
+`hash` | bool | `true` | Whether to prepent each color by an hash (`#`) or not
+`default` | mixed | empty array | If the palette is empty return this instead
 
 ## get_palette( [$options] )
 
