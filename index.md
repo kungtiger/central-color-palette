@@ -28,4 +28,9 @@ kt_Central_Palette::instance()->set_palette(array(
 ));
 ```
 
-This method requires one argument and it can either be an array of colors in hexadecimal notation, or if you need more refinement pass an array of arrays.
+This method requires one argument and it can either be an array of colors in hexadecimal notation, or if you need more refinement pass an array of arrays. These arrays need to have at least the `color` entry, all other are optional Any invalid color will be silently ignored.
+
+The `status` option can be set by two constants:
+
+| kt_Central_Palette::COLOR_ACTIVE | The color is active |
+| kt_Central_Palette::COLOR_INACTIVE | The color is inactive |
