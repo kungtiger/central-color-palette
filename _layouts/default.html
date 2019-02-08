@@ -11,14 +11,10 @@
     <![endif]-->
   </head>
   <body>
-    <div class="wrapper">
-      <section>
-        <h1><a href="{{ "/" | absolute_url }}">{{ site.title }}</a></h1>
-
+    <main>
+      <h1><a href="{{ "/" | absolute_url }}">{{ site.title }}</a></h1>
       {{ content }}
-
-      </section>
-    </div>
+    </main>
     <script src="{{ "/assets/js/scale.fix.js" | relative_url }}"></script>
   </body>
 </html>
