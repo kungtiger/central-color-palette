@@ -71,12 +71,15 @@ h1 {
         color: #222;
         font-size: .8em;
         border: 1px solid #ddd;
+        margin-left: .3em;
         padding: .2em .3em;
         padding-left: 36px;
+        background-color: #f1f1f1;
+        box-shadow: inset 0 0 0 1px #fff;
     }
     @each $icon in (github, wordpress) {
         .link-#{$icon} {
-            background-image: url(../#{$icon}.png);
+            background-image: url(../images/#{$icon}.png);
         }
     }
 }
