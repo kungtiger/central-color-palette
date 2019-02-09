@@ -8,7 +8,6 @@ Get the colors of the central palette.
 
 ```php
 kt_Central_Palette::instance()->get_colors();
-
 ```
 
 Option | Type | Default | Description
@@ -25,7 +24,6 @@ Get the central palette.
 
 ```php
 kt_Central_Palette::instance()->get_palette();
-
 ```
 
 Option | Type | Default | Description
