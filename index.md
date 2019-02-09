@@ -6,6 +6,11 @@ layout: default
 
 Get the colors of the central palette.
 
+```php
+kt_Central_Palette::instance()->get_colors();
+
+```
+
 Option | Type | Default | Description
 ------ | ---- | ------- | -----------
 `alpha` | bool | `false` | If `true` and a colors of the palette has a transparency less than 100 the color will be returned in CSS `rgba()` notation
@@ -17,6 +22,11 @@ Option | Type | Default | Description
 ## get_palette( [array $options] ) : array
 
 Get the central palette.
+
+```php
+kt_Central_Palette::instance()->get_palette();
+
+```
 
 Option | Type | Default | Description
 ------ | ---- | ------- | -----------
