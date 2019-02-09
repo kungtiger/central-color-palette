@@ -2,7 +2,7 @@
 layout: default
 ---
 
-## get_colors( [$options] )
+## get_colors( [array $options] ) : array
 
 Get the colors of the central palette.
 
@@ -14,7 +14,7 @@ Option | Type | Default | Description
 `hash` | bool | `true` | Whether to prepent each color by an hash (`#`) or not
 `default` | mixed | empty array | If the palette is empty return this instead
 
-## get_palette( [$options] )
+## get_palette( [array $options] ) : array
 
 Get the central palette.
 
@@ -24,7 +24,7 @@ Option | Type | Default | Description
 `chunk` | false or int | `false` | Chunk palette into columns of constant size.
 `pad` | mixed | black | Pad the last column by this to the length of `chunk`.
 
-## set_palette( $colors )
+## set_palette( array $colors ) : array
 
 Set the central palette.
 
@@ -54,7 +54,7 @@ Option | Type | Default | Description
 `status` | int | `kt_Central_Palette::COLOR_ACTIVE` | `kt_Central_Palette::COLOR_ACTIVE` or `kt_Central_Palette::COLOR_INACTIVE`
 `index` | int | auto | Internal number assigned to each color. Unless you really know what you're doing just ignore it.
 
-## float2hex( $float )
+## float2hex( float $float ) : string
 
 Convert a float to a string in hexadecimal notation.
 
@@ -64,7 +64,7 @@ kt_Central_Palette::instance()->float2hex(0.3);  // 4C
 kt_Central_Palette::instance()->float2hex(1);    // FF
 ```
 
-## hex2rgb( $hex )
+## hex2rgb( string $hex ) : array
 
 Convert a string in hexadecimal notation to a RGB vector.
 
@@ -74,7 +74,7 @@ kt_Central_Palette::instance()->hex2rgb("060");      // [ 0, 102, 0 ]
 kt_Central_Palette::instance()->hex2rgb("6CD240");   // [ 108, 210, 64 ]
 ```
 
-## hex2rgba( $hex, $alpha )
+## hex2rgba( string $hex, int $alpha ) : string
 
 Convert a string in hexadecimal notation and a alpha to CSS RGBA notation.
 
@@ -84,7 +84,7 @@ kt_Central_Palette::instance()->hex2rgba("060", 50);      // "rgba(0,102,0,0.5)"
 kt_Central_Palette::instance()->hex2rgba("6CD240", 100);  // "rgba(108,210,64,1)"
 ```
 
-## int2hex( $int )
+## int2hex( int $int ) : string
 
 Convert a integer to a string in hexadecimal notation.
 
@@ -94,7 +94,7 @@ kt_Central_Palette::instance()->int2hex(76);   // 4C
 kt_Central_Palette::instance()->int2hex(255);  // FF
 ```
 
-## rgb2hex( $rgb [, $as_floats [, $prepend_hash]] )
+## rgb2hex( array $rgb [, bool $as_floats [, bool $prepend_hash]] ) : string
 
 Convert a RGB vector to a string in hexadecimal notation.
 

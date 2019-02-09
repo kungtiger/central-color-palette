@@ -90,7 +90,7 @@ h1 {
         line-height: 24px;
         vertical-align: middle;
         float: right;
-        margin-left: .3em;
+        margin: 0 .15em;
         padding: 3px 9px;
         border: 1px solid #ddd;
         border-radius: 3px;
@@ -186,6 +186,15 @@ hr {
         width: auto;
         padding:20px 0;
         margin:0 0 20px;
+    }
+    h1 {
+        .title {
+            display: block;
+            margin-bottom: .5em;
+        }
+        .link {
+            float: left;
+        }
     }
 }
 
