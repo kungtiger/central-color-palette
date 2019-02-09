@@ -4,6 +4,7 @@
 body {
     background-color: #fff;
     padding: 50px;
+    margin: 0;
     font: 14px/1.5 "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
     color: #333;
     font-weight: 400;
@@ -132,8 +133,7 @@ hr {
 
 @media print, screen and (max-width: 960px) {
     main {
-        border:1px solid #e5e5e5;
-        border-width:1px 0;
+        width: auto;
         padding:20px 0;
         margin:0 0 20px;
     }
