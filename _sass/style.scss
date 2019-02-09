@@ -71,17 +71,19 @@ h1 {
         line-height: 24px;
         vertical-align: middle;
         float: right;
-        color: #222;
-        font-size: .7em;
-        border: 1px solid #ddd;
         margin-left: .3em;
         padding: 3px 5px;
         padding-left: 36px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
         background-color: #f1f1f1;
         box-shadow: inset 0 0 0 1px #fff;
         background-size: 24px;
         background-repeat: no-repeat;
         background-position: 6px 3px;
+        color: #222;
+        font-size: .7em;
+        transition: border-color linear .100s;
         &:hover {
             border-color: #999;
         }
