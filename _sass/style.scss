@@ -101,6 +101,7 @@ h1 {
         box-shadow: inset 0 0 0 1px #fff;
         color: #555;
         font-size: 16px;
+        font-weight: normal;
         transition: color,border-color linear .100s;
         &:hover {
             border-color: #999;
