@@ -86,9 +86,6 @@ main {
 
 h1 {
     .link {
-        height: 24px;
-        line-height: 24px;
-        vertical-align: middle;
         float: right;
         margin: 0 .15em;
         padding: 3px 9px;
@@ -103,13 +100,7 @@ h1 {
             border-color: #999;
             color: #225;
         }
-        .icon, .label {
-            display: inline-block;
-            float: left;
-        }
         .icon {
-            margin: 2px 4px 2px 0;
-            margin-right: 4px;
             font-size: 20px;
         }
     }
