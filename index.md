@@ -18,6 +18,12 @@ Option | Type | Default | Description
 
 Get the central palette.
 
+Option | Type | Default | Description
+------ | ---- | ------- | -----------
+`status` | int or array | `false` | Filter the colors by status.
+`chunk` | false or int | `false` | Chunk palette into columns of constant size.
+`pad` | mixed | black | Pad the last column by this to the length of `chunk`.
+
 ## set_palette( $colors )
 
 Set the central palette.
