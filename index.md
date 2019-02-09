@@ -2,6 +2,8 @@
 layout: default
 ---
 
+Manage a site-wide central color palette for an uniform look'n'feel! Supports the new Block Editor, Theme Customizer and many themes and plugins.
+
 ## get_colors( [$options] )
 
 Get the colors of the central palette.
@@ -94,7 +96,7 @@ kt_Central_Palette::instance()->int2hex(76);    // 4C
 kt_Central_Palette::instance()->int2hex(255);   // FF
 ```
 
-## rgb2hex( $rgb [, $as_floats [, $prepend_hash ]] )
+## rgb2hex( $rgb [, $as_floats [, $prepend_hash]] )
 
 This method accepts two additional optional arguments.
 
