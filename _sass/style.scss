@@ -89,6 +89,7 @@ h1 {
         color: #267CB9;
     }
     .link {
+        display: inline-flex;
         float: right;
         margin: 0 .15em;
         padding: 3px 9px;
@@ -104,7 +105,12 @@ h1 {
             color: #225;
         }
         .icon {
+            margin-right: 5px;
             font-size: 20px;
+        }
+        .label {
+            line-height: normal;
+            vertical-align: middle;
         }
     }
 }
