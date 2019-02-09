@@ -91,12 +91,20 @@ kt_Central_Palette::instance()->hex2rgba("6CD240", 100);  // "rgba(108,210,64,1)
 Convert a integer to a string in hexadecimal notation.
 
 ```php
-kt_Central_Palette::instance()->int2hex(0);     // 00
-kt_Central_Palette::instance()->int2hex(76);    // 4C
-kt_Central_Palette::instance()->int2hex(255);   // FF
+kt_Central_Palette::instance()->int2hex(0);    // 00
+kt_Central_Palette::instance()->int2hex(76);   // 4C
+kt_Central_Palette::instance()->int2hex(255);  // FF
 ```
 
 ## rgb2hex( $rgb [, $as_floats [, $prepend_hash]] )
+
+Convert a RGB vector to a string in hexadecimal notation.
+
+```php
+kt_Central_Palette::instance->rgb2hex(array(0, 0, 0));        // #000000
+kt_Central_Palette::instance->rgb2hex(array(127, 127, 127));  // #7F7F7F
+kt_Central_Palette::instance->rgb2hex(array(255, 255, 255));  // #FFFFFF
+```
 
 This method accepts two additional optional arguments.
 
