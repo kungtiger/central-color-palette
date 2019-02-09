@@ -83,7 +83,7 @@ h1 {
     }
     @each $icon in (github, wordpress) {
         .link-#{$icon} {
-            background-image: url(../images/#{$icon}.png);
+            background-image: url(../images/#{$icon}.svg);
         }
     }
 }
