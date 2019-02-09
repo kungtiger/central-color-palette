@@ -1,6 +1,25 @@
 @import "fonts";
 @import "rouge-github";
 
+.icon {
+    font-family: 'icons' !important;
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-github:before {
+    content: "G";
+}
+.icon-wordpress:before {
+    content: "W";
+}
+
 body {
     background-color: #fff;
     padding: 50px;
@@ -78,19 +97,11 @@ h1 {
         border-radius: 3px;
         background-color: #f1f1f1;
         box-shadow: inset 0 0 0 1px #fff;
-        background-size: 24px;
-        background-repeat: no-repeat;
-        background-position: 6px 3px;
         color: #222;
-        font-size: .7em;
+        font-size: 16px;
         transition: border-color linear .100s;
         &:hover {
             border-color: #999;
-        }
-    }
-    @each $icon in (github, wordpress) {
-        .link-#{$icon} {
-            background-image: url(../images/#{$icon}.svg);
         }
     }
 }

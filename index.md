@@ -108,7 +108,7 @@ kt_Central_Palette::instance->rgb2hex(array(255, 255, 255));  // #FFFFFF
 
 This method accepts two additional optional arguments.
 
-If you pass `true` as second argument the vector components are interpreted as floats between 0 and 1.
+If you pass `true` as second argument the vector components will be interpreted as floats between 0 and 1.
 
 ```php
 kt_Central_Palette::instance->rgb2hex(array(0, 0, 0), true);        // #000000
