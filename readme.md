@@ -1,7 +1,7 @@
 # Central Color Palette
 
 **This is the development repository and is not intended for production deployment.  
-For production releases please use the WordPress Plugin Repository.**
+For production releases please use the [WordPress Plugin Repository](https://wordpress.org/plugins/kt-tinymce-color-grid).**
 
 Contributors: kungtiger  
 Requires at least: 3.5  
