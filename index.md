@@ -45,8 +45,8 @@ Option | Type | Default | Description
 `color` | string | none | Valid colors are defined by the regular expression `#?{[0-9a-fA-F]{3}|[0-9a-fA-F]{6}}`
 `name` | string | empty string | Pretty self-explanatory
 `alpha` | int | 100 | An integer between 0 and 100
-`status` | int | kt_Central_Palette::COLOR_ACTIVE | `kt_Central_Palette::COLOR_ACTIVE` or `kt_Central_Palette::COLOR_INACTIVE`
-`index` | int | auto | Internal number assigned to each color. Unless you really know what you're doing just ignore it
+`status` | int | `kt_Central_Palette::COLOR_ACTIVE` | `kt_Central_Palette::COLOR_ACTIVE` or `kt_Central_Palette::COLOR_INACTIVE`
+`index` | int | auto | Internal number assigned to each color. Unless you really know what you're doing just ignore it.
 
 ## float2hex( $float )
 
