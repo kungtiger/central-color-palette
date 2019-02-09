@@ -38,20 +38,15 @@ kt_Central_Palette::instance()->set_palette(array(
 ```
 
 Comes in two flavors: Either pass an array of colors in in hexadecimal notation, or if you need more refinement pass an array of arrays. These arrays need to have at least the `color` entry and all other entries are optional.  
-Any invalid color will be silently ignored. Valid colors are defined by the regular expression `#?{[0-9a-fA-F]{3}|[0-9a-fA-F]{6}}`.
+Any invalid color will be silently ignored.
 
-`name` is pretty self-explanatory. If not set an empty string is assumed.
-
-`alpha` needs to be a integer between 0 and 100. If not set 100 is assumed.
-
-The `status` option can be set by two constants:
-
-| `kt_Central_Palette::COLOR_ACTIVE` | The color is active |
-| `kt_Central_Palette::COLOR_INACTIVE` | The color is inactive |
-
-If `status` is not set `kt_Central_Palette::COLOR_ACTIVE` is assumed.
-
-The `index` option sets the internal number assigned to each color. Unless you really know what you're doing just ignore it.
+Option | Type | Default | Description
+------ | ---- | ------- | -----------
+`color` | string | none | Valid colors are defined by the regular expression `#?{[0-9a-fA-F]{3}|[0-9a-fA-F]{6}}`
+`name` | string | empty string | Pretty self-explanatory
+`alpha` | int | 100 | An integer between 0 and 100
+`status` | int | kt_Central_Palette::COLOR_ACTIVE | `kt_Central_Palette::COLOR_ACTIVE` or `kt_Central_Palette::COLOR_INACTIVE`
+`index` | int | auto | Internal number assigned to each color. Unless you really know what you're doing just ignore it
 
 ## float2hex( $float )
 
