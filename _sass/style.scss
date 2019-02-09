@@ -65,8 +65,20 @@ main {
     padding-bottom: 50px;
 }
 
-.alignright {
-    float: right;
+h1 {
+    .link {
+        float: right;
+        color: #222;
+        font-size: .8em;
+        border: 1px solid #ddd;
+        padding: .2em .3em;
+        padding-left: 36px;
+    }
+    @each $icon in (github, wordpress) {
+        .link-#{$icon} {
+            background-image: url(../#{$icon}.png);
+        }
+    }
 }
 
 blockquote {
