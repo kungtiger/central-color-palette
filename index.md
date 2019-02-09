@@ -2,8 +2,6 @@
 layout: default
 ---
 
-Manage a site-wide central color palette for an uniform look'n'feel! Supports the new Block Editor, Theme Customizer and many themes and plugins.
-
 ## get_colors( [$options] )
 
 Get the colors of the central palette.
