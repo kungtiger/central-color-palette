@@ -2,7 +2,7 @@
 Contributors: kungtiger
 Requires at least: 3.5
 Tested up to: 5.0
-Stable tag: 1.13.2
+Stable tag: 1.13.3
 Requires PHP: 5.3
 Tags: color, customizer, editor, gutenberg, palette, picker, tinymce
 License: GPLv2 or later
@@ -25,9 +25,14 @@ Central Color Palette supports these plugins and themes:
 - [Beaver Builder](https://www.wpbeaverbuilder.com)
 - [Elementor](https://wordpress.org/plugins/elementor)
 - [GeneratePress Premium](https://generatepress.com/premium)
+- [Hestia Theme](https://wordpress.org/themes/hestia)
 - [Neve Theme](https://wordpress.org/themes/neve)
 - [OceanWP](https://oceanwp.org)
 - [Page Builder Framework](https://wp-pagebuilderframework.com)
+
+== API Documentation ==
+
+Central Color Palette offers some methods, so have a look at the [API Documentation](https://kungtiger.github.io/central-color-palette).
 
 == Privacy Policy ==
 This plugin does not collect or use any private data.
@@ -67,141 +72,10 @@ Please [contact me](http://wordpress.org/support/plugin/kt-tinymce-color-grid) a
 3. Custom palette for the Theme Customizer
 4. Legacy support for the Classic Editor
 
-== Changelog ==
-
-= 1.13.2 =
-- Fixed incompatibility with Elementor Pro
-- Added support for Neve Theme
-
-= 1.13.1 =
-- Fixed broken Import
-- Fixed JavaScript bug
-
-= 1.13 =
-- Added Gutenberg/Block Editor support
-- Transparency channel is now always visible inside the palette editor
-- Transparency can now be toggled individually for those integrations that use it
-- Colors can be deactivated to hide them inside the block editor but retain their assignment on a block level
-- Imports try to reuse existing colors to reduce chaos inside the block editor
-- Added more export formats
-- Added JSON import
-
-= 1.12.6 =
-Customizer palette breaks into rows of 8 colors
-
-= 1.12.5 =
-Fixed faulty output on palette save (thanks to @cavalierlife)
-
-= 1.12.4 =
-Fixed unstable integration with Elementor (thanks to @eplanet)
-
-= 1.12.3 =
-- Fixed dynamic styles interfering with other parts of TinyMCE (thanks to @jb2386)
-- Added credits to changelog of all those who contributed
-- Added GDPR notice to readme
-
-= 1.12.2 =
-- Clarified what "Add to Customizer" does
-- Added support for [Astra Theme](https://wpastra.com)
-- Added support for [Page Builder Framework](https://wp-pagebuilderframework.com)
-
-= 1.12.1 =
-Fixed a bug where opacity values are displayed instead of color names
-
-= 1.12 =
-- Added support for [Beaver Builder](https://www.wpbeaverbuilder.com)
-- Fixed some bugs and typos
-
-= 1.11 =
-- Added support for [OceanWP](https://oceanwp.org)
-- Fixed alpha picker for Chrome
-- Removed palette import, it's to buggy.
-
-= 1.10 =
-- Added support for [Elementor](https://wordpress.org/plugins/elementor) (thanks to @blackeye0013)
-- Added support for [GeneratePress Premium](https://generatepress.com/premium) (thanks to @eplanet)
-
-= 1.9.3 =
-- Fixed fatal error when updating from an older version than 1.6 (thanks to @flixflix)
-- Removed dependancy on farbtastic; now the color picker ships self-contained
-
-= 1.9.2 =
-Corrected some palette import bugs
-
-= 1.9.1 =
-Fixed fatal error due to missing wp_is_mobile on network installations of WordPress (thanks to @kzeni)
-
-= 1.9 =
-- Import third party palettes
-- Automatic color names thanks to Chirag Mehta's [Name that Color](http://chir.ag/projects/ntc) and @flixflix
-- Improved backup
-
-= 1.8 =
-- All settings and the palette can now be exported and imported (suggested by @sigersmit)
-- Added new grid type: only central palette for TinyMCE (suggested by @jhned)
-- Added CSS for right-to-left locales
-
-= 1.7.2 =
-- Fixes JavaSript bug (thanks to @hrohh)
-- Fixes conflict with Poedit (thanks to @hrohh)
-
-= 1.7.1 =
-Corrected typos and some translation strings
-
-= 1.7 =
-- Theme Customizer support added (thanks to @kzeni)
-- Color grid is now adjustable in type and size
-
-= 1.6.1 =
-Fixed hidden colors after defining more than 13 colors (thanks to @wlashack)
-
-= 1.6 =
-- Useability improvements
-- Faster grid generation by using pre-calculated colors
-- Namespaced CSS IDs and HTML form variables to avoid name collisions
-- Fixed CSS errors
-
-= 1.5 =
-Added clean uninstall routine
-
-= 1.4.4 =
-- Fixed possible JavaScript error
-- Reduced overhead
-- Removed language files; now handled by GlotPress
-
-= 1.4.3 =
-Update for WordPress 4.4
-
-= 1.4.2 =
-- Repaired headers already send error
-- Preparation for GlotPress
-
-= 1.4.1 =
-Fixed a broken script
-
-= 1.4 =
-- Improved settings page
-- Improved accessibility
-- Fixed security leaks
-- Fixed translation bugs
-
-= 1.3.1 =
-Changed HTML to conform with WordPress 4.3
-
-= 1.3 =
-Added support for custom persistent colors (thanks to @cash3p)
-
-= 1.2 =
-Fixes an error when using more than one TinyMCE
-
-= 1.1 =
-- Stylesheet gets enqueued only on pages with a TinyMCE
-- Reduced overhead
-
-= 1.0 =
-Initial release.
-
 == Upgrade Notice ==
+
+= 1.13.3 =
+Adds support for Hestia Theme and a public method to manually set the central palette
 
 = 1.13.2 =
 Fixes incompatibility with Elementor Pro and added support for Neve Theme

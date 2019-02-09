@@ -6,7 +6,7 @@ For production releases please use the WordPress Plugin Repository.**
 Contributors: kungtiger  
 Requires at least: 3.5  
 Tested up to: 5.0  
-Stable tag: 1.13.2  
+Stable tag: 1.13.3  
 Requires PHP: 5.3  
 Tags: color, customizer, editor, gutenberg, palette, picker, tinymce  
 License: GPLv2 or later  
@@ -32,3 +32,7 @@ Central Color Palette supports these plugins and themes:
 - [Neve Theme](https://wordpress.org/themes/neve)
 - [OceanWP](https://oceanwp.org)
 - [Page Builder Framework](https://wp-pagebuilderframework.com)
+
+## API Documentation
+
+Central Color Palette offers some methods, so have a look at the [API Documentation](https://kungtiger.github.io/central-color-palette).

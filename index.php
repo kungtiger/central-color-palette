@@ -4,7 +4,7 @@
  * Plugin Name: Central Color Palette
  * Plugin URI: https://wordpress.org/plugins/kt-tinymce-color-grid
  * Description: Manage a site-wide central color palette for an uniform look'n'feel! Supports the new block editor, theme customizer and many themes and plugins.
- * Version: 1.13.2
+ * Version: 1.13.3
  * Author: Gáravo
  * Author URI: http://profiles.wordpress.org/kungtiger
  * License: GPL2
@@ -13,7 +13,7 @@
  */
 
 if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
-    define('KT_CENTRAL_PALETTE', '1.13.2');
+    define('KT_CENTRAL_PALETTE', '1.13.3');
     define('KT_CENTRAL_PALETTE_DIR', plugin_dir_path(__FILE__));
     define('KT_CENTRAL_PALETTE_URL', plugin_dir_url(__FILE__));
     define('KT_CENTRAL_PALETTE_BASENAME', plugin_basename(__FILE__));
@@ -283,7 +283,8 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             add_filter('tiny_mce_before_init', array($this, 'tinymce_integration'), 10, 2);
             add_action('after_wp_tiny_mce', array($this, 'print_tinymce_style'));
 
-            if (get_option(self::CUSTOMIZER)) {
+            $integrate_customizer = get_option(self::CUSTOMIZER);
+            if ($integrate_customizer) {
                 $fn = array($this, 'iris_integration');
                 add_action('admin_print_scripts', $fn);
                 add_action('admin_print_footer_scripts', $fn);
@@ -313,12 +314,18 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 $this->integrate_gutenberg();
             }
 
-            if ($this->supports('hestia-theme') && get_option(self::CUSTOMIZER)) {
+            if ($this->supports('hestia-theme') && $integrate_customizer) {
                 add_filter('hestia_accent_color_palette', array($this, 'hestia_integration'));
             }
         }
 
-        protected function hestia_integration($palette) {
+        /**
+         * Integrate with Hestia Theme
+         * @since 1.13.3
+         * @param bool|array $palette
+         * @return bool|array
+         */
+        public function hestia_integration($palette) {
             return $this->get_colors(array(
                         'default' => $palette,
             ));
@@ -445,6 +452,69 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 $palette[$last] = array_pad($palette[$last], $chunk, $options['pad']);
             }
 
+            return $palette;
+        }
+
+        /**
+         * Set the palette.
+         * @since 1.13.3
+         * @param null|array $input
+         * @return array Returns the palette
+         */
+        public function set_palette($input) {
+            $palette = array();
+            if ($input === null) {
+                if (!is_array($_POST['kt_palette'])) {
+                    return $palette;
+                }
+
+                $next_index = get_option(self::NEXT_INDEX, 1);
+                $data = $_POST['kt_palette'];
+                foreach ($data['color'] as $i => $color) {
+                    $color = $this->sanitize_color($color);
+                    if (!$color) {
+                        continue;
+                    }
+
+                    $alpha = $this->sanitize_alpha($data['alpha'][$i]);
+                    $name = $this->sanitize_textfield($data['name'][$i]);
+                    $index = $data['index'][$i];
+                    if (!is_numeric($index) || $index < 1) {
+                        $index = $next_index;
+                        $next_index++;
+                    }
+                    $status = $data['status'][$i];
+                    $palette[] = compact('color', 'name', 'alpha', 'index', 'status');
+                }
+                update_option(self::NEXT_INDEX, $next_index);
+            } else if (is_array($input)) {
+                $statii = array(self::COLOR_ACTIVE, self::COLOR_INACTIVE);
+                foreach ($input as $data) {
+                    if (is_string($data)) {
+                        $data = array('color' => $data);
+                    }
+                    if (!is_array($data) || !isset($data['color'])) {
+                        continue;
+                    }
+
+                    $color = $this->sanitize_color($data['color']);
+                    if (!$color) {
+                        continue;
+                    }
+
+                    $name = isset($data['name']) ? $this->sanitize_textfield($data['name']) : '';
+                    $alpha = isset($data['alpha']) ? $this->sanitize_alpha($data['alpha']) : 100;
+                    $index = intval(isset($data['index']) ? $this->data['index'] : 0);
+                    if (isset($data['status'])) {
+                        $status = in_array($data['status'], $statii) ? $data['status'] : self::COLOR_ACTIVE;
+                    }
+                    $palette[] = compact('color', 'name', 'alpha', 'index', 'status');
+                }
+
+                // this assigns proper/reused indices and statii
+                $palette = $this->merge_palette($palette);
+            }
+            update_option(self::PALETTE, $palette);
             return $palette;
         }
 
@@ -700,7 +770,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             $this->native_palette_support = array(
                 'astra' => __('Astra Theme', 'kt-tinymce-color-grid'),
                 'page-builder-framework' => __('Page Builder Framework', 'kt-tinymce-color-grid'),
-                // 'hestia-theme' => __('Hestia Theme', 'kt-tinymce-color-grid'),
+                'hestia-theme' => __('Hestia Theme', 'kt-tinymce-color-grid'),
                 'neve-theme' => __('Neve Theme', 'kt-tinymce-color-grid'),
             );
 
@@ -819,34 +889,13 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 update_option($option, $this->get_request($field) ? '1' : false);
             }
 
-            $palette = array();
-            $next_index = get_option(self::NEXT_INDEX, 1);
-            $raw = (array) $this->get_request('kt_palette');
-            foreach ($raw['color'] as $i => $color) {
-                $color = $this->sanitize_color($color);
-                if (!$color) {
-                    continue;
-                }
 
-                $alpha = $this->sanitize_alpha($raw['alpha'][$i]);
-                $name = $this->sanitize_textfield($raw['name'][$i]);
-                $index = $raw['index'][$i];
-                if (!is_numeric($index) || $index < 1) {
-                    $index = $next_index;
-                    $next_index++;
-                }
-                $status = $raw['status'][$i];
-                $palette[] = compact('color', 'name', 'alpha', 'index', 'status');
-            }
-            update_option(self::NEXT_INDEX, $next_index);
-
-            if ($type == 'palette' && !$palette) {
+            if ($type == 'palette' && !$this->set_palette(null)) {
                 $type = 'default';
                 $visual = '';
             }
             update_option(self::TYPE, $type);
             update_option(self::VISUAL, $visual);
-            update_option(self::PALETTE, $palette);
 
             $lumas = array('linear') + $this->get_luma_transformations('ids');
 
@@ -901,12 +950,15 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
          * @since 1.13
          * @ignore
          * @param mixed $x
+         * @param bool $exit
          */
-        public function xmp($x) {
+        public function xmp($x, $exit = true) {
             print '<xmp>';
             print_r($x);
             print '</xmp>';
-            exit;
+            if ($exit) {
+                exit;
+            }
         }
 
         protected function sanitize_textfield($string) {
@@ -1003,7 +1055,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 $options[self::ACTIVE_VERSION] = 180;
             }
             $this->update_import($options);
-            $this->merge_palette($options);
+            $options[self::PALETTE] = $this->merge_palette($options[self::PALETTE]);
             $names = array_keys($this->default_options());
             foreach ($names as $name) {
                 if (isset($options[$name])) {
@@ -1022,18 +1074,15 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
         }
 
         /**
+         * Tries to reuse existing colors and their indices during an import
          * @since 1.13
-         * @param array $options
+         * @param array $palette
+         * @return array
          */
-        protected function merge_palette(&$options) {
-            if (!is_array($options[self::PALETTE])) {
-                return;
-            }
-
-            $import = $options[self::PALETTE];
+        protected function merge_palette($palette) {
             $next_index = get_option(self::NEXT_INDEX, 1);
             $current_palette = (array) get_option(self::PALETTE);
-            foreach ($import as $i => $new) {
+            foreach ($palette as $i => $new) {
                 $threshold = .25;
                 $reuse = false;
                 $new_color = strtoupper($new['color']);
@@ -1066,15 +1115,15 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 }
 
                 if ($reuse !== false) {
-                    $import[$i]['index'] = $current_palette[$reuse]['index'];
+                    $palette[$i]['index'] = $current_palette[$reuse]['index'];
 
                     // make sure we don't change the status of the color or active
                     // colors may disappear or inactive colors reappear inside the block editor
-                    $import[$i]['status'] = $current_palette[$reuse]['status'];
+                    $palette[$i]['status'] = $current_palette[$reuse]['status'];
 
                     $current_palette[$reuse] = null;
                 } else {
-                    $import[$i]['index'] = $next_index;
+                    $palette[$i]['index'] = $next_index;
                     $next_index++;
                 }
             }
@@ -1087,13 +1136,13 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 }
                 $inactives[] = $current;
             }
-            $options[self::PALETTE] = array_merge($inactives, $import);
-
+            $palette = array_merge($inactives, $palette);
             update_option(self::NEXT_INDEX, $next_index);
+            return $palette;
         }
 
         /**
-         * Calculate euclidian distance of two RGB vectors
+         * Calculate euclidean distance between two RGB vectors
          * @param array $a
          * @param array $b
          * @return float [0..100]
@@ -1520,7 +1569,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 $luma = $this->transform_luma($luma, $type);
                 for ($col = 0; $col < $columns; $col++) {
                     $_rgb = $this->apply_luma($luma, $rgb[$col]);
-                    $map[] = $this->rgb2hex($_rgb);
+                    $map[] = $this->rgb2hex($_rgb, true, false);
                     $map[] = "";
                 }
 
@@ -1581,10 +1630,12 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             ));
             $plugin_url = esc_url(_x('https://wordpress.org/plugins/kt-tinymce-color-grid', 'URL to plugin site', 'kt-tinymce-color-grid'));
             $support_url = esc_url(_x('https://wordpress.org/support/plugin/kt-tinymce-color-grid', 'URL to support forums', 'kt-tinymce-color-grid'));
+            $documentation_url = esc_url('https://kungtiger.github.io/central-color-palette');
             $screen->set_help_sidebar('
 <p><strong>' . esc_html__('For more information:', 'kt-tinymce-color-grid') . '</strong></p>
 <p><a href="' . $plugin_url . '" target="_blank">' . esc_html__('Visit plugin site', 'kt-tinymce-color-grid') . '</a></p>
-<p><a href="' . $support_url . '" target="_blank">' . esc_html__('Support Forums', 'kt-tinymce-color-grid') . '</a></p>');
+<p><a href="' . $support_url . '" target="_blank">' . esc_html__('Support Forums', 'kt-tinymce-color-grid') . '</a></p>
+<p><a href="' . $documentation_url . '" target="_blank">' . esc_html__('API Documentation', 'kt-tinymce-color-grid') . '</a></p>');
         }
 
         /**
@@ -2424,9 +2475,9 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             $string = strtoupper($string);
             $hex = null;
             if (preg_match('~#?([0-9A-F]{6}|[0-9A-F]{3})~', $string, $hex)) {
-                $hex = $hex[1];
+                $hex = ltrim($hex[1], '#');
                 if (strlen($hex) == 3) {
-                    $hex = preg_replace('~[0-9A-F]~', '\1\1', $hex);
+                    $hex = preg_replace('~([0-9A-F])~', '\1\1', $hex);
                 }
                 return $prepend_hash ? "#$hex" : $hex;
             }
@@ -2494,19 +2545,20 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
          * Convert a RGB vector to a HEX string
          * @since 1.9
          * @param array $rgb RGB vector [red, gree, blue] of floats [0..1]
+         * @param array $floats Return vector of floats
          * @return string|false Returns false if any of the components is outside [0..1]
          */
-        public function rgb2hex($rgb) {
-            if (!is_array($rgb)) {
-                $rgb = func_get_args();
-            }
+        public function rgb2hex($rgb, $floats = false, $prepend_hash = true) {
             foreach ($rgb as $i => $x) {
-                if ($x < 0 || $x > 1) {
+                if ($floats) {
+                    $x *= 255;
+                }
+                if ($x < 0 || $x > 255) {
                     return false;
                 }
-                $rgb[$i] = $this->int2hex($x * 255);
+                $rgb[$i] = $this->int2hex($x);
             }
-            return implode('', $rgb);
+            return ($prepend_hash ? '#' : '') . implode('', $rgb);
         }
 
         /**
