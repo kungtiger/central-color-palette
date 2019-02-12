@@ -12,10 +12,10 @@ kt_Central_Palette::instance()->get_colors();
 
 Option | Type | Default | Description
 ------ | ---- | ------- | -----------
-`alpha` | bool | `false` | If `true` and a colors of the palette has a transparency less than 100 the color will be returned in CSS `rgba()` notation
+`alpha` | bool | `false` | If `true` and a color of the palette has a transparency less than 100 the color will be returned in CSS `rgba()` notation
 `min` | bool or int | `false` | The number of colors that should at least be returned
 `pad` | string | `"#FFFFFF"` | If the palette has less than `min` colors pad by this
-`hash` | bool | `true` | Whether to prepent each color by an hash (`#`) or not
+`hash` | bool | `true` | Whether to prepend each color by an hash (`#`) or not
 `default` | mixed | *empty array* | If the palette is empty return this instead
 
 ## get_palette( [array $options] ) : array
@@ -28,7 +28,7 @@ kt_Central_Palette::instance()->get_palette();
 
 Option | Type | Default | Description
 ------ | ---- | ------- | -----------
-`status` | int or array | `false` | Filter the colors by status.
+`status` | bool, int or array | `false` | Filter the colors by status.
 `chunk` | false or int | `false` | Chunk palette into columns of constant size.
 `pad` | mixed | *black* | Pad the last column by this color to the length of `chunk`.
 
