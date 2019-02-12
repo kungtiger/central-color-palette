@@ -16,7 +16,7 @@ Option | Type | Default | Description
 `min` | bool or int | `false` | The number of colors that should at least be returned
 `pad` | string | `"#FFFFFF"` | If the palette has less than `min` colors pad by this
 `hash` | bool | `true` | Whether to prepent each color by an hash (`#`) or not
-`default` | mixed | empty array | If the palette is empty return this instead
+`default` | mixed | *empty array* | If the palette is empty return this instead
 
 ## get_palette( [array $options] ) : array
 
@@ -30,11 +30,16 @@ Option | Type | Default | Description
 ------ | ---- | ------- | -----------
 `status` | int or array | `false` | Filter the colors by status.
 `chunk` | false or int | `false` | Chunk palette into columns of constant size.
-`pad` | mixed | black | Pad the last column by this to the length of `chunk`.
+`pad` | mixed | *black* | Pad the last column by this color to the length of `chunk`.
 
-## set_palette( array $colors ) : array
+## set_palette( array $colors [, boolean|float $merge_threshold = 0.25] ) : array
 
 Set the central palette.
+
+Argument | Type | Default | Description
+-------- | ---- | ------- | -----------
+`$colors` | array | *required* | The color palette
+`$merge_threshold` | `false` or float | `0.25` | See further down for details
 
 ```php
 kt_Central_Palette::instance()->set_palette(array( "#222299", "6DE", "#777" ... ));
@@ -51,80 +56,18 @@ kt_Central_Palette::instance()->set_palette(array(
 ));
 ```
 
-Comes in two flavors: Either pass an array of colors in in hexadecimal notation, or if you need more refinement pass an array of arrays. These arrays need to have at least the `color` entry and all other entries are optional.  
-Any invalid color will be silently ignored.
+You can can define each color as a string, but if you need more refinement pass an array instead of an string. This array needs at least a `color` entry and all others are optional. Any invalid color will be silently ignored.
 
 Option | Type | Default | Description
 ------ | ---- | ------- | -----------
-`color` | string | none | Valid colors are defined by the regular expression `#?{[0-9a-fA-F]{3}|[0-9a-fA-F]{6}}`
-`name` | string | empty string | Pretty self-explanatory
-`alpha` | int | 100 | An integer between 0 and 100
+`color` | string | *required* | Valid colors are defined by the regular expression `#?{[0-9a-fA-F]{3}|[0-9a-fA-F]{6}}`
+`name` | string | *empty string* | Pretty self-explanatory
+`alpha` | int | `100` | An integer between 0 and 100
 `status` | int | `kt_Central_Palette::COLOR_ACTIVE` | `kt_Central_Palette::COLOR_ACTIVE` or `kt_Central_Palette::COLOR_INACTIVE`
-`index` | int | auto | Internal number assigned to each color. Unless you really know what you're doing just ignore it.
+`index` | int | *auto* | See further down for details
 
-## float2hex( float $float ) : string
+### Merge Threshold and Palette Indices
 
-Convert a float to a string in hexadecimal notation.
+Each color has an unique index that is used to generate CSS class names for WordPress' new Block Editor. These indices maintainthe relation between a color and a block. In order to minimize chaos that can arise when a palette is set it is merged with the current one in order to reuse indices. To determine if an index should be reused new colors are checked against current ones and if found close enough that index is reused. You can set this merge threshold by passing an additional second argument between 0 and 100, whereby 0 means an exact match and 100 any. The default is 0.25, so quite a close match is needed. If a merge threshold is set any indices that are set through the `index` entry of a color will be ignored.
 
-```php
-kt_Central_Palette::instance()->float2hex(0);    // 00
-kt_Central_Palette::instance()->float2hex(0.3);  // 4C
-kt_Central_Palette::instance()->float2hex(1);    // FF
-```
-
-## hex2rgb( string $hex ) : array
-
-Convert a string in hexadecimal notation to a RGB vector.
-
-```php
-kt_Central_Palette::instance()->hex2rgb("#FF0000");  // [ 255, 0, 0 ]
-kt_Central_Palette::instance()->hex2rgb("060");      // [ 0, 102, 0 ]
-kt_Central_Palette::instance()->hex2rgb("6CD240");   // [ 108, 210, 64 ]
-```
-
-## hex2rgba( string $hex, int $alpha ) : string
-
-Convert a string in hexadecimal notation and a alpha to CSS RGBA notation.
-
-```php
-kt_Central_Palette::instance()->hex2rgba("#FF0000", 80);  // "rgba(255,0,0,0.8)"
-kt_Central_Palette::instance()->hex2rgba("060", 50);      // "rgba(0,102,0,0.5)"
-kt_Central_Palette::instance()->hex2rgba("6CD240", 100);  // "rgba(108,210,64,1)"
-```
-
-## int2hex( int $int ) : string
-
-Convert a integer to a string in hexadecimal notation.
-
-```php
-kt_Central_Palette::instance()->int2hex(0);    // 00
-kt_Central_Palette::instance()->int2hex(76);   // 4C
-kt_Central_Palette::instance()->int2hex(255);  // FF
-```
-
-## rgb2hex( array $rgb [, bool $as_floats [, bool $prepend_hash]] ) : string
-
-Convert a RGB vector to a string in hexadecimal notation.
-
-```php
-kt_Central_Palette::instance->rgb2hex(array(0, 0, 0));        // #000000
-kt_Central_Palette::instance->rgb2hex(array(127, 127, 127));  // #7F7F7F
-kt_Central_Palette::instance->rgb2hex(array(255, 255, 255));  // #FFFFFF
-```
-
-This method accepts two additional optional arguments.
-
-If you pass `true` as second argument the vector components will be interpreted as floats between 0 and 1.
-
-```php
-kt_Central_Palette::instance->rgb2hex(array(0, 0, 0), true);        // #000000
-kt_Central_Palette::instance->rgb2hex(array(0.5, 0.5, 0.5), true);  // #7F7F7F
-kt_Central_Palette::instance->rgb2hex(array(1, 1, 1), true);        // #FFFFFF
-```
-
-If you pass a boolean as third argument the resulting string will be prepended by a hash (`#`) or not.
-
-```php
-kt_Central_Palette::instance->rgb2hex(array(51, 0, 204), false, false);  // 3300CC
-kt_Central_Palette::instance->rgb2hex(array(.2, 0, .8), true, false);    // 3300CC
-```
+If you you do not want for any merge to happen simply pass `false` as second argument. In that case make sure your colors have unique indices or none at all. The method does not check for index collisions and any color missing an index is automatically assigned one.
