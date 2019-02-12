@@ -458,61 +458,51 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         /**
          * Set the palette.
          * @since 1.13.3
-         * @param null|array $input
+         * @param null|array $new_palette
+         * @param bool|float $merge_threshold
          * @return array Returns the palette
          */
-        public function set_palette($input) {
+        public function set_palette($new_palette, $merge_threshold = .25) {
+            if (!is_array($new_palette)) {
+                return false;
+            }
+
             $palette = array();
-            if ($input === null) {
-                if (!is_array($_POST['kt_palette'])) {
-                    return $palette;
+            $next_index = 1;
+            $statii = array(self::COLOR_ACTIVE, self::COLOR_INACTIVE);
+            foreach ($new_palette as $data) {
+                if (is_string($data)) {
+                    $data = array('color' => $data);
+                }
+                if (!is_array($data) || !isset($data['color'])) {
+                    continue;
                 }
 
-                $next_index = get_option(self::NEXT_INDEX, 1);
-                $data = $_POST['kt_palette'];
-                foreach ($data['color'] as $i => $color) {
-                    $color = $this->sanitize_color($color);
-                    if (!$color) {
-                        continue;
-                    }
-
-                    $alpha = $this->sanitize_alpha($data['alpha'][$i]);
-                    $name = $this->sanitize_textfield($data['name'][$i]);
-                    $index = $data['index'][$i];
-                    if (!is_numeric($index) || $index < 1) {
-                        $index = $next_index;
-                        $next_index++;
-                    }
-                    $status = $data['status'][$i];
-                    $palette[] = compact('color', 'name', 'alpha', 'index', 'status');
-                }
-                update_option(self::NEXT_INDEX, $next_index);
-            } else if (is_array($input)) {
-                $statii = array(self::COLOR_ACTIVE, self::COLOR_INACTIVE);
-                foreach ($input as $data) {
-                    if (is_string($data)) {
-                        $data = array('color' => $data);
-                    }
-                    if (!is_array($data) || !isset($data['color'])) {
-                        continue;
-                    }
-
-                    $color = $this->sanitize_color($data['color']);
-                    if (!$color) {
-                        continue;
-                    }
-
-                    $name = isset($data['name']) ? $this->sanitize_textfield($data['name']) : '';
-                    $alpha = isset($data['alpha']) ? $this->sanitize_alpha($data['alpha']) : 100;
-                    $index = intval(isset($data['index']) ? $this->data['index'] : 0);
-                    if (isset($data['status'])) {
-                        $status = in_array($data['status'], $statii) ? $data['status'] : self::COLOR_ACTIVE;
-                    }
-                    $palette[] = compact('color', 'name', 'alpha', 'index', 'status');
+                $color = $this->sanitize_color($data['color']);
+                if (!$color) {
+                    continue;
                 }
 
-                // this assigns proper/reused indices and statii
-                $palette = $this->merge_palette($palette);
+                $name = isset($data['name']) ? $this->sanitize_textfield($data['name']) : '';
+                $alpha = isset($data['alpha']) ? $this->sanitize_alpha($data['alpha']) : 100;
+
+                $index = 0;
+                if (!$merge_threshold) {
+                    if (isset($data['index'])) {
+                        $index = is_numeric($data['index']) ? intval($data['index']) : $next_index++;
+                    } else {
+                        $index = $next_index++;
+                    }
+                }
+
+                if (isset($data['status'])) {
+                    $status = in_array($data['status'], $statii) ? $data['status'] : self::COLOR_ACTIVE;
+                }
+                $palette[] = compact('color', 'name', 'alpha', 'index', 'status');
+            }
+
+            if ($merge_threshold) {
+                $palette = $this->merge_palette($palette, $merge_threshold);
             }
             update_option(self::PALETTE, $palette);
             return $palette;
@@ -889,8 +879,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 update_option($option, $this->get_request($field) ? '1' : false);
             }
 
-
-            if ($type == 'palette' && !$this->set_palette(null)) {
+            if ($type == 'palette' && !$this->save_palette()) {
                 $type = 'default';
                 $visual = '';
             }
@@ -926,6 +915,33 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             }
             wp_redirect(add_query_arg('updated', $action == 'save' ? '1' : false));
             exit;
+        }
+
+        protected function save_palette() {
+
+
+            $palette = array();
+            $next_index = get_option(self::NEXT_INDEX, 1);
+            $data = $_POST['kt_palette'];
+            foreach ($data['color'] as $i => $color) {
+                $color = $this->sanitize_color($color);
+                if (!$color) {
+                    continue;
+                }
+
+                $alpha = $this->sanitize_alpha($data['alpha'][$i]);
+                $name = $this->sanitize_textfield($data['name'][$i]);
+                $index = $data['index'][$i];
+                if (!is_numeric($index) || $index < 1) {
+                    $index = $next_index;
+                    $next_index++;
+                }
+                $status = $data['status'][$i];
+                $palette[] = compact('color', 'name', 'alpha', 'index', 'status');
+            }
+            update_option(self::NEXT_INDEX, $next_index);
+            update_option(self::PALETTE, $palette);
+            return $palette;
         }
 
         protected function handle_backup($action) {
@@ -1076,14 +1092,19 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
         /**
          * Tries to reuse existing colors and their indices during an import
          * @since 1.13
+         * @since 1.13.3 Added $threshold parameter
          * @param array $palette
+         * @param float $threshold
          * @return array
          */
-        protected function merge_palette($palette) {
+        protected function merge_palette($palette, $threshold = .25) {
             $next_index = get_option(self::NEXT_INDEX, 1);
             $current_palette = (array) get_option(self::PALETTE);
-            foreach ($palette as $i => $new) {
+            if ($threshold === true) {
                 $threshold = .25;
+            }
+            foreach ($palette as $i => $new) {
+                $shortest_distance = $threshold;
                 $reuse = false;
                 $new_color = strtoupper($new['color']);
                 $new_rgb = $this->hex2rgb($new_color);
@@ -1108,8 +1129,8 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                         $current['rgb'] = $this->hex2rgb($current['color']);
                     }
                     $distance = $this->rgb_distance($new_rgb, $current['rgb']);
-                    if ($distance < $threshold) {
-                        $threshold = $distance;
+                    if ($distance < $shortest_distance) {
+                        $shortest_distance = $distance;
                         $reuse = $j;
                     }
                 }
