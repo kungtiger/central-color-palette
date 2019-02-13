@@ -14,9 +14,9 @@
 
 if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
     define('KT_CENTRAL_PALETTE', '1.13.3');
-    define('KT_CENTRAL_PALETTE_DIR', plugin_dir_path(__FILE__));
-    define('KT_CENTRAL_PALETTE_URL', plugin_dir_url(__FILE__));
-    define('KT_CENTRAL_PALETTE_BASENAME', plugin_basename(__FILE__));
+    define('KT_CENTRAL_PALETTE_DIR', /** @scrutinizer ignore-call */ plugin_dir_path(__FILE__));
+    define('KT_CENTRAL_PALETTE_URL', /** @scrutinizer ignore-call */ plugin_dir_url(__FILE__));
+    define('KT_CENTRAL_PALETTE_BASENAME', /** @scrutinizer ignore-call */ plugin_basename(__FILE__));
 
     class kt_Central_Palette {
 
@@ -113,6 +113,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          * @ignore
          */
         private function __construct() {
+            /** @scrutinizer ignore-call */
             add_action('plugins_loaded', array($this, 'init_l10n'));
             add_action('after_setup_theme', array($this, 'init_integrations'), 999);
             add_action('admin_menu', array($this, 'add_settings_page'));
@@ -460,11 +461,10 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          * @since 1.13.3
          * @param null|array $new_palette
          * @param bool|float $merge_threshold
-         * @return array Returns the palette
          */
         public function set_palette($new_palette, $merge_threshold = .25) {
             if (!is_array($new_palette)) {
-                return false;
+                return array();
             }
 
             $palette = array();
@@ -487,7 +487,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 $alpha = isset($data['alpha']) ? $this->sanitize_alpha($data['alpha']) : 100;
 
                 $index = 0;
-                if (!$merge_threshold) {
+                if ($merge_threshold === false) {
                     if (isset($data['index'])) {
                         $index = is_numeric($data['index']) ? intval($data['index']) : $next_index++;
                     } else {
@@ -501,9 +501,10 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 $palette[] = compact('color', 'name', 'alpha', 'index', 'status');
             }
 
-            if ($merge_threshold) {
+            if ($merge_threshold !== false) {
                 $palette = $this->merge_palette($palette, $merge_threshold);
             }
+            /** @scrutinizer ignore-call */
             update_option(self::PALETTE, $palette);
             return $palette;
         }
@@ -1094,15 +1095,21 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
          * @since 1.13
          * @since 1.13.3 Added $threshold parameter
          * @param array $palette
-         * @param float $threshold
+         * @param bool|float $threshold
          * @return array
          */
         protected function merge_palette($palette, $threshold = .25) {
+            /** @scrutinizer ignore-call */
             $next_index = get_option(self::NEXT_INDEX, 1);
+            /** @scrutinizer ignore-call */
             $current_palette = (array) get_option(self::PALETTE);
             if ($threshold === true) {
                 $threshold = .25;
             }
+            if ($threshold === false) {
+                $threshold = 0;
+            }
+
             foreach ($palette as $i => $new) {
                 $shortest_distance = $threshold;
                 $reuse = false;
@@ -1158,6 +1165,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 $inactives[] = $current;
             }
             $palette = array_merge($inactives, $palette);
+            /** @scrutinizer ignore-call */
             update_option(self::NEXT_INDEX, $next_index);
             return $palette;
         }
@@ -1306,7 +1314,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             $ext = $format['extension'];
             $prefix = isset($format['prefix']) ? $format['prefix'] : '';
             $name = get_bloginfo('name');
-            $suffix = sanitize_file_name(str_replace('"', '', $name));
+            $suffix = sanitize_file_name(/** @scrutinizer ignore-call */ str_replace('"', '', $name));
             if ($suffix) {
                 $suffix = "_$suffix";
             }
