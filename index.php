@@ -113,7 +113,6 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          * @ignore
          */
         private function __construct() {
-            /** @scrutinizer ignore-call */
             add_action('plugins_loaded', array($this, 'init_l10n'));
             add_action('after_setup_theme', array($this, 'init_integrations'), 999);
             add_action('admin_menu', array($this, 'add_settings_page'));
@@ -504,7 +503,6 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             if ($merge_threshold !== false) {
                 $palette = $this->merge_palette($palette, $merge_threshold);
             }
-            /** @scrutinizer ignore-call */
             update_option(self::PALETTE, $palette);
             return $palette;
         }
@@ -1099,9 +1097,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
          * @return array
          */
         protected function merge_palette($palette, $threshold = .25) {
-            /** @scrutinizer ignore-call */
             $next_index = get_option(self::NEXT_INDEX, 1);
-            /** @scrutinizer ignore-call */
             $current_palette = (array) get_option(self::PALETTE);
             if ($threshold === true) {
                 $threshold = .25;
@@ -1165,7 +1161,6 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 $inactives[] = $current;
             }
             $palette = array_merge($inactives, $palette);
-            /** @scrutinizer ignore-call */
             update_option(self::NEXT_INDEX, $next_index);
             return $palette;
         }
@@ -1191,7 +1186,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 false, 'size-php', 'size', 'partially',
                 'no-upload', false, 'tmp', 'fs', 'ext'
             );
-            if (isset($file['error']) && $file['error']) {
+            if (isset($file['error']) && $file['error'] !== false) {
                 return $upload_error[$file['error']];
             }
             if (!is_uploaded_file($file['tmp_name'])) {
@@ -1282,7 +1277,6 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
          * @return string
          */
         protected function download_export() {
-            $payload = null;
             $id = $this->get_request('kt_export_format');
             if (!isset($this->export_formats[$id])) {
                 return 'format';
@@ -1337,7 +1331,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
 
         public function export_json() {
             $parts = $this->get_request('kt_export_parts');
-            if (!is_array($parts) || !$parts) {
+            if (!is_array($parts) || !empty($parts)) {
                 return new WP_Error('no-parts');
             }
 
@@ -2365,7 +2359,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
          * Get a cookie
          * @since 1.9
          * @param string $name Cookie name
-         * @param string|null $default Default value if cookie is not set
+         * @param mixed $default Default value if cookie is not set
          * @return string
          */
         protected function get_cookie($name, $default = null) {
@@ -2536,7 +2530,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
         /**
          * Convert a integer to a HEX string
          * @since 1.9
-         * @param int $i [0..255]
+         * @param int|float $i [0..255]
          * @return string
          */
         public function int2hex($i) {
@@ -2574,7 +2568,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
          * Convert a RGB vector to a HEX string
          * @since 1.9
          * @param array $rgb RGB vector [red, gree, blue] of floats [0..1]
-         * @param array $floats Return vector of floats
+         * @param bool $floats Return vector of floats
          * @return string|false Returns false if any of the components is outside [0..1]
          */
         public function rgb2hex($rgb, $floats = false, $prepend_hash = true) {
