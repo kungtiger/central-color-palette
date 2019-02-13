@@ -14,9 +14,9 @@
 
 if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
     define('KT_CENTRAL_PALETTE', '1.13.3');
-    define('KT_CENTRAL_PALETTE_DIR', /** @scrutinizer ignore-call */ plugin_dir_path(__FILE__));
-    define('KT_CENTRAL_PALETTE_URL', /** @scrutinizer ignore-call */ plugin_dir_url(__FILE__));
-    define('KT_CENTRAL_PALETTE_BASENAME', /** @scrutinizer ignore-call */ plugin_basename(__FILE__));
+    define('KT_CENTRAL_PALETTE_DIR', plugin_dir_path(__FILE__));
+    define('KT_CENTRAL_PALETTE_URL', plugin_dir_url(__FILE__));
+    define('KT_CENTRAL_PALETTE_BASENAME', plugin_basename(__FILE__));
 
     class kt_Central_Palette {
 
@@ -1314,7 +1314,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             $ext = $format['extension'];
             $prefix = isset($format['prefix']) ? $format['prefix'] : '';
             $name = get_bloginfo('name');
-            $suffix = sanitize_file_name(/** @scrutinizer ignore-call */ str_replace('"', '', $name));
+            $suffix = sanitize_file_name(str_replace('"', '', $name));
             if ($suffix) {
                 $suffix = "_$suffix";
             }
