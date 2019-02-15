@@ -1,4 +1,4 @@
-/** global: postboxes pagenow kt_Color*/
+/** global: wp postboxes pagenow kt_Color */
 
 /*
  * kt_Color
@@ -344,7 +344,7 @@
             mouseup: mouseup
         };
 
-        if (String(navigator.appVersion).match(/MSIE [0-6]\./)) {
+        if (String(window.navigator.appVersion).match(/MSIE [0-6]\./)) {
             $container.children().each(fixAlpha);
         }
 
@@ -795,7 +795,7 @@
         });
 
         var $Add = $('#kt_add');
-        $Add.on('click', function (e) {
+        $Add.on('click', function () {
             switchToTab('kt_tab_palette');
             $(color_template)
             .appendTo($ColorEditor)

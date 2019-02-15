@@ -504,6 +504,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 $palette = $this->merge_palette($palette, $merge_threshold);
             }
             update_option(self::PALETTE, $palette);
+            $this->render_map();
             return $palette;
         }
 
@@ -2591,7 +2592,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
          * @return array
          */
         public function hex2rgb($hex) {
-            $color = $this->sanitize_color($hex, false);
+            $color = (string) $this->sanitize_color($hex, false);
             $hex = str_split($color, 2);
             return array_map('hexdec', $hex);
         }
