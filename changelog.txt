@@ -1,6 +1,6 @@
 = 1.13.3 =
 - Added support for Hestia Theme
-- Added public method to manually set the central palette (thaks to @mrhasbean)
+- Added public method to manually set the central palette (suggested by @mrhasbean)
 - Fixed bug in color sanitation method
 
 = 1.13.2 =

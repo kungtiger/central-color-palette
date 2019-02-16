@@ -29,6 +29,7 @@ Central Color Palette supports these plugins and themes:
 - [Beaver Builder](https://www.wpbeaverbuilder.com)
 - [Elementor](https://wordpress.org/plugins/elementor)
 - [GeneratePress Premium](https://generatepress.com/premium)
+- [Hestia Theme](https://wordpress.org/themes/hestia)
 - [Neve Theme](https://wordpress.org/themes/neve)
 - [OceanWP](https://oceanwp.org)
 - [Page Builder Framework](https://wp-pagebuilderframework.com)

@@ -478,7 +478,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 }
 
                 $color = $this->sanitize_color($data['color']);
-                if (!$color) {
+                if ($color === false) {
                     continue;
                 }
 
@@ -487,15 +487,16 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
 
                 $index = 0;
                 if ($merge_threshold === false) {
-                    if (isset($data['index'])) {
-                        $index = is_numeric($data['index']) ? intval($data['index']) : $next_index++;
+                    if (isset($data['index']) && is_numeric($data['index'])) {
+                        $index = intval($data['index']);
                     } else {
                         $index = $next_index++;
                     }
                 }
 
-                if (isset($data['status'])) {
-                    $status = in_array($data['status'], $statii) ? $data['status'] : self::COLOR_ACTIVE;
+                $status = self::COLOR_ACTIVE;
+                if (isset($data['status']) && in_array($data['status'], $statii)) {
+                    $status = $data['status'];
                 }
                 $palette[] = compact('color', 'name', 'alpha', 'index', 'status');
             }
