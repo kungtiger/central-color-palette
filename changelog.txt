@@ -1,3 +1,19 @@
+= 1.13.8 =
+Elementor: Fixes broken alpha channel
+
+= 1.13.7 =
+- Gutenberg: Fixed overwritten color classes on front-end (thanks to @t0b1hh)
+- Elementor: Fixed palette size and row display for many colors (thanks to @stevewoody82)
+
+= 1.13.6 =
+Fixed broken palette upload/import
+
+= 1.13.5 =
+Fixed broken download for JSON and Backup formats
+
+= 1.13.4 =
+Fixed bug: new palette color are not save due to logic error
+
 = 1.13.3 =
 - Added support for Hestia Theme
 - Added public method to manually set the central palette (suggested by @mrhasbean)

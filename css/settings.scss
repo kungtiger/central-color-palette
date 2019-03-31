@@ -93,7 +93,7 @@ input[name='kt_type'] {
     }
     .integrate-form {
         padding: 0 2em;
-        margin-bottom: 1.6em
+        margin-bottom: 1.6em;
     }
     h2 {
         background-color: $bar_bg;
@@ -434,6 +434,11 @@ input[name='kt_type'] {
         .column {
             flex: 1;
             width: 50%;
+            padding-bottom: 1em;
+
+            & + .column {
+                border-left: 1px dashed #e1e1e1;
+            }
         }
     }
 
@@ -442,7 +447,7 @@ input[name='kt_type'] {
     }
 
     #kt_toolbar {
-        margin: 1em 0 -1px;
+        margin: 0 0 -1px;
 
         #kt_add {
             margin-left: 10px;
@@ -597,7 +602,7 @@ input[name='kt_type'] {
         .index-debug {
             right: 80px;
             color: #88B;
-            
+
             &:before {
                 content: 'index: ';
             }

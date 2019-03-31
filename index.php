@@ -4,7 +4,7 @@
  * Plugin Name: Central Color Palette
  * Plugin URI: https://wordpress.org/plugins/kt-tinymce-color-grid
  * Description: Manage a site-wide central color palette for an uniform look'n'feel! Supports the new block editor, theme customizer and many themes and plugins.
- * Version: 1.13.3
+ * Version: 1.13.8
  * Author: Gáravo
  * Author URI: http://profiles.wordpress.org/kungtiger
  * License: GPL2
@@ -13,7 +13,7 @@
  */
 
 if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
-    define('KT_CENTRAL_PALETTE', '1.13.3');
+    define('KT_CENTRAL_PALETTE', '1.13.8');
     define('KT_CENTRAL_PALETTE_DIR', plugin_dir_path(__FILE__));
     define('KT_CENTRAL_PALETTE_URL', plugin_dir_url(__FILE__));
     define('KT_CENTRAL_PALETTE_BASENAME', plugin_basename(__FILE__));
@@ -45,6 +45,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         const BEAVERBUILDER = 'kt_color_grid_beaverbuilder';
         const GUTENBERG = 'kt_color_grid_gutenberg';
         const GUTENBERG_MERGE = 'kt_color_grid_gutenberg_merge';
+        const GUTENBERG_FORCE = 'kt_color_grid_gutenberg_force';
         const ACTIVE_VERSION = 'kt_color_grid_version';
         const AUTONAME = 'kt_color_grid_autoname';
         const NEXT_INDEX = 'kt_color_grid_next_index';
@@ -135,7 +136,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                     }
                     return true;
 
-                case 'gutenberg': return $this->version_compare('>=', '5.0-beta2') || defined('GUTENBERG_VERSION') || has_filter('replace_editor', 'gutenberg_init');
+                case 'gutenberg': return $this->version_compare('>=', '5.0');
                 case 'elementor': return defined('ELEMENTOR_VERSION');
                 case 'generatepress': return defined('GP_PREMIUM_VERSION');
                 case 'oceanwp': return defined('OCEANWP_THEME_VERSION');
@@ -295,6 +296,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             if ($this->supports('elementor') && get_option(self::ELEMENTOR)) {
                 add_filter('elementor/editor/localize_settings', array($this, 'elementor_integration'), 100);
                 add_action('elementor/editor/after_enqueue_scripts', array($this, 'elementor_styles'));
+                add_action('elementor/editor/after_enqueue_styles', array($this, 'print_iris_style'));
             }
 
             if ($this->supports('generatepress') && get_option(self::GENERATEPRESS)) {
@@ -340,16 +342,20 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                         $palette = array_merge(reset($existing_palette), $palette);
                     }
                 }
+
+                // 8 is just after wp_print_styles, 99 just before wp_custom_css_cb
+                $priority = get_option(self::GUTENBERG_FORCE) ? 99 : 8;
+
                 add_theme_support('editor-color-palette', $palette);
-                add_action('wp_print_styles', array($this, 'print_gutenberg_style'));
-                add_action('admin_print_styles', array($this, 'print_gutenberg_style'));
+                add_action('wp_head', array($this, 'print_gutenberg_style'), $priority);
+                add_action('admin_print_styles', array($this, 'print_gutenberg_style'), 21);
             }
         }
 
         public function print_gutenberg_style() {
             if (is_admin()) {
                 $screen = get_current_screen();
-                if ($screen->base != 'post') {
+                if (!$screen->is_block_editor()) {
                     return;
                 }
             }
@@ -359,15 +365,22 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 return;
             }
 
+            $debug = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG;
+            $force = get_option(self::GUTENBERG_FORCE) ? ' !important' : '';
+
             print '<style id="kt_central_palette_gutenberg_css" type="text/css">';
             foreach ($palette as $set) {
                 $slug = $set['slug'];
                 $color = $set['color'];
-                print "
+                if ($debug) {
+                    print "
   .has-$slug-color {
-    color: $color }
+    color: $color$force }
   .has-$slug-background-color {
-    background-color: $color }";
+    background-color: $color$force }";
+                } else {
+                    print ".has-$slug-color{color:$color$force}.has-$slug-background-color{background-color:$color$force}";
+                }
             }
             print '
 </style>
@@ -610,6 +623,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             $colors = $this->get_colors(array(
                 'pad' => '#FFF',
                 'min' => 6,
+                'alpha' => true,
             ));
             $palette = array();
             for ($i = 1, $n = count($colors); $i <= $n; $i++) {
@@ -630,7 +644,22 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             $printed = true;
 
             $colors = $this->get_colors();
-            $n = count($colors);
+            if (!$colors) {
+                return;
+            }
+
+            $this->print_iris_style();
+
+            $colors = implode('","', array_map('esc_js', $colors));
+            print '
+<script id="kt_central_palette_iris_integration" type="text/javascript">
+jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
+</script>
+';
+        }
+
+        public function print_iris_style() {
+            $n = count($this->get_colors());
             if (!$n) {
                 return;
             }
@@ -645,20 +674,15 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
   width: 20px !important;
   height: 20px !important;
   margin: 3px 0 0 3px !important }
+.wp-picker-active .iris-picker .iris-palette-container {
+    bottom: 5px !important }
 .wp-picker-active .iris-picker .iris-palette:first-child,
-.wp-picker-active .iris-picker .iris-palette:nth-child(9n) {
+.wp-picker-active .iris-picker .iris-palette:nth-child(8n+1) {
   margin-left: 0 !important;
   clear: left }
 .wp-picker-active .iris-picker .iris-slider {
   height: ' . ($padding_bottom + 183) . 'px !important }
 </style>';
-
-            $colors = implode('","', array_map('esc_js', $colors));
-            print '
-<script id="kt_central_palette_iris_integration" type="text/javascript">
-jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
-</script>
-';
         }
 
         /**
@@ -875,12 +899,15 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 'kt_beaverbuilder' => self::BEAVERBUILDER,
                 'kt_gutenberg' => self::GUTENBERG,
                 'kt_gutenberg_merge' => self::GUTENBERG_MERGE,
+                'kt_gutenberg_force' => self::GUTENBERG_FORCE,
             );
             foreach ($booleans as $field => $option) {
                 update_option($option, $this->get_request($field) ? '1' : false);
             }
 
-            if ($type == 'palette' && !$this->save_palette()) {
+            $palette_saved = $this->save_palette();
+
+            if (!$palette_saved && $type == 'palette') {
                 $type = 'default';
                 $visual = '';
             }
@@ -918,12 +945,15 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             exit;
         }
 
+        /**
+         * Save the palette from form data
+         * @since 1.13.3
+         * @return boolean
+         */
         protected function save_palette() {
-
-
             $palette = array();
             $next_index = get_option(self::NEXT_INDEX, 1);
-            $data = $_POST['kt_palette'];
+            $data = (array) $this->get_request('kt_palette');
             foreach ($data['color'] as $i => $color) {
                 $color = $this->sanitize_color($color);
                 if (!$color) {
@@ -942,7 +972,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             }
             update_option(self::NEXT_INDEX, $next_index);
             update_option(self::PALETTE, $palette);
-            return $palette;
+            return count($palette) > 0;
         }
 
         protected function handle_backup($action) {
@@ -1004,6 +1034,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 self::BEAVERBUILDER => false,
                 self::GUTENBERG => false,
                 self::GUTENBERG_MERGE => false,
+                self::GUTENBERG_FORCE => false,
                 self::TYPE => self::DEFAULT_TYPE,
                 self::ROWS => self::DEFAULT_ROWS,
                 self::COLS => self::DEFAULT_COLS,
@@ -1185,10 +1216,18 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
          */
         protected function verify_upload($file) {
             $upload_error = array(
-                false, 'size-php', 'size', 'partially',
-                'no-upload', false, 'tmp', 'fs', 'ext'
+                UPLOAD_ERR_INI_SIZE => 'size-php',
+                UPLOAD_ERR_FORM_SIZE => 'size',
+                UPLOAD_ERR_PARTIAL => 'partially',
+                UPLOAD_ERR_NO_FILE => 'no-upload',
+                UPLOAD_ERR_NO_TMP_DIR => 'tmp',
+                UPLOAD_ERR_CANT_WRITE => 'fs',
+                UPLOAD_ERR_EXTENSION => 'ext',
             );
-            if (isset($file['error']) && $file['error'] !== false) {
+            if (!isset($file['error'])) {
+                $file['error'] = UPLOAD_ERR_NO_FILE;
+            }
+            if (isset($upload_error[$file['error']])) {
                 return $upload_error[$file['error']];
             }
             if (!is_uploaded_file($file['tmp_name'])) {
@@ -1333,7 +1372,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
 
         public function export_json() {
             $parts = $this->get_request('kt_export_parts');
-            if (!is_array($parts) || !empty($parts)) {
+            if (!is_array($parts) || empty($parts)) {
                 return new WP_Error('no-parts');
             }
 
@@ -1901,17 +1940,22 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             if ($has_gutenberg) {
                 $_gutenberg = get_option(self::GUTENBERG);
                 $_gutenberg_merge = get_option(self::GUTENBERG_MERGE);
+                $_gutenberg_force = get_option(self::GUTENBERG_FORCE);
                 $gutenberg_checked = $_gutenberg ? ' checked="checked"' : '';
                 $gutenberg_merge_checked = $_gutenberg_merge ? ' checked="checked"' : '';
+                $gutenberg_force_checked = $_gutenberg_force ? ' checked="checked"' : '';
                 $merge_hidden = $_gutenberg ? '' : ' hide-if-js';
+                $force_hint = esc_attr__("Try this if your colors won't get applied to your theme", 'kt-tinymce-color-grid');
                 print "
     <p class='integrate-toggle'>
       <input type='checkbox' id='kt_gutenberg' name='kt_gutenberg' tabindex='9' value='1'$gutenberg_checked data-form='1' />
-      <label for='kt_gutenberg'>" . esc_html__('Add to new Block Editor', 'kt-tinymce-color-grid') . "</label>
+      <label for='kt_gutenberg'>" . esc_html__('Add to Block Editor', 'kt-tinymce-color-grid') . "</label>
     </p>
     <p class='integrate-form$merge_hidden' id='kt_gutenberg_form'>
       <input type='checkbox' id='kt_gutenberg_merge' name='kt_gutenberg_merge' tabindex='9' value='1'$gutenberg_merge_checked />
-      <label for='kt_gutenberg_merge'>" . esc_html__('Append to existing palette', 'kt-tinymce-color-grid') . "</label>
+      <label for='kt_gutenberg_merge'>" . esc_html__('Append to existing palette', 'kt-tinymce-color-grid') . "</label><br>
+      <input type='checkbox' id='kt_gutenberg_force' name='kt_gutenberg_force' tabindex='9' value='1'$gutenberg_force_checked/>
+      <label for='kt_gutenberg_force' title='$force_hint'>" . esc_html__('Enforce colors', 'kt-tinymce-color-grid') . "</label>
     </p>";
             }
             print "
@@ -2498,15 +2542,14 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
          */
         public function sanitize_color($string, $prepend_hash = true) {
             $string = strtoupper($string);
-            $hex = null;
-            if (preg_match('~#?([0-9A-F]{6}|[0-9A-F]{3})~', $string, $hex)) {
-                $hex = ltrim($hex[1], '#');
-                if (strlen($hex) == 3) {
-                    $hex = preg_replace('~([0-9A-F])~', '\1\1', $hex);
-                }
-                return $prepend_hash ? "#$hex" : $hex;
+            $hex = $this->preg_get('~#?([0-9A-F]{6}|[0-9A-F]{3})~', $string);
+            if ($hex === null) {
+                return false;
             }
-            return false;
+            if (strlen($hex) == 3) {
+                $hex = preg_replace('~([0-9A-F])~', '\1\1', $hex);
+            }
+            return $prepend_hash ? "#$hex" : $hex;
         }
 
         /**
