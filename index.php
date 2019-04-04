@@ -1666,8 +1666,8 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 'content' => '
 <p>' . __('You can create a color palette and include it to the Visual Editor and/or the Theme Customizer.', 'kt-tinymce-color-grid') . '</p>
 <p>' . __("<strong>Add to Theme Customizer</strong> makes the palette available to the color picker of the Theme Customizer. This works by altering WordPress' color picker so every plugin using it receives the palette as well.", 'kt-tinymce-color-grid') . '</p>
-<p>' . __('<strong>Add to Block Editor</strong> adds the palette to the color picker of the new Block Editor.', 'kt-tinymce-color-grid') . '</p>
-<p>' . __('<strong>Add to Classic Editor</strong> adds the palette to the color picker of the Classic Editor. This only works if you choose a color grid other than <strong>Default</strong>.', 'kt-tinymce-color-grid') . '</p>'
+<p>' . __('<strong>Add to block editor</strong> adds the palette to the color picker of the new block editor.', 'kt-tinymce-color-grid') . '</p>
+<p>' . __('<strong>Add to classic editor</strong> adds the palette to the color picker of the classic editor. This only works if you choose a color grid other than <strong>Default</strong>.', 'kt-tinymce-color-grid') . '</p>'
             ));
             $screen->add_help_tab(array(
                 'id' => 'grid',
@@ -1949,7 +1949,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 print "
     <p class='integrate-toggle'>
       <input type='checkbox' id='kt_gutenberg' name='kt_gutenberg' tabindex='9' value='1'$gutenberg_checked data-form='1' />
-      <label for='kt_gutenberg'>" . esc_html__('Add to Block Editor', 'kt-tinymce-color-grid') . "</label>
+      <label for='kt_gutenberg'>" . esc_html__('Add to block editor', 'kt-tinymce-color-grid') . "</label>
     </p>
     <p class='integrate-form$merge_hidden' id='kt_gutenberg_form'>
       <input type='checkbox' id='kt_gutenberg_merge' name='kt_gutenberg_merge' tabindex='9' value='1'$gutenberg_merge_checked />
@@ -1961,7 +1961,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             print "
     <p class='integrate-toggle' id='kt_visual_option'>
       <input type='checkbox' id='kt_visual' name='kt_visual' tabindex='9' value='1'$visual_checked />
-      <label for='kt_visual'>" . esc_html__('Add to Classic Editor', 'kt-tinymce-color-grid') . "</label>
+      <label for='kt_visual'>" . esc_html__('Add to classic editor', 'kt-tinymce-color-grid') . "</label>
     </p>
   </div>";
 

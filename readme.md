@@ -12,13 +12,13 @@ Tags: color, customizer, editor, gutenberg, palette, picker, tinymce
 License: GPLv2 or later  
 License URI: http://www.gnu.org/licenses/gpl-2.0.html  
 
-Manage a site-wide central color palette for an uniform look'n'feel! Supports the new Block Editor, Theme Customizer and many themes and plugins.
+Manage a site-wide central color palette for an uniform look'n'feel! Supports the new block editor, Theme Customizer and many themes and plugins.
 
 ## Description
 
-This plugin allows you to manage a site-wide central color palette for an uniform look'n'feel. The palette of the new Block Editor and the Theme Customizer are supported, as well as the Classic Editor. You can define this central color palette through the settings menu. All plugins that make use of WordPress' color picker can benefit from this plugin as well.
+This plugin allows you to manage a site-wide central color palette for an uniform look'n'feel. The palette of the new block editor and the Theme Customizer are supported, as well as the classic editor. You can define this central color palette through the settings menu. All plugins that make use of WordPress' color picker can benefit from this plugin as well.
 
-Also this plugin replaces the color picker for choosing a text or background color found inside the Classic Editor with a bigger and customizable color grid.
+Also this plugin replaces the color picker for choosing a text or background color found inside the classic editor with a bigger and customizable color grid.
 
 For an easy migration between WordPress installations you can export and import your palette settings and colors.
 
