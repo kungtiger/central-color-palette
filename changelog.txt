@@ -28,7 +28,7 @@ Fixed bug: new palette color are not save due to logic error
 - Fixed JavaScript bug
 
 = 1.13 =
-- Added Gutenberg/Block Editor support
+- Added Gutenberg/block editor support
 - Transparency channel is now always visible inside the palette editor
 - Transparency can now be toggled individually for those integrations that use it
 - Colors can be deactivated to hide them inside the block editor but retain their assignment on a block level

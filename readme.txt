@@ -8,13 +8,13 @@ Tags: color, customizer, editor, gutenberg, palette, picker, tinymce
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Manage a site-wide central color palette for an uniform look'n'feel! Supports the new Block Editor, Theme Customizer and many themes and plugins.
+Manage a site-wide central color palette for an uniform look'n'feel! Supports the new block editor, Theme Customizer and many themes and plugins.
 
 == Description ==
 
-This plugin allows you to manage a site-wide central color palette for an uniform look'n'feel. The palette of the new Block Editor and the Theme Customizer are supported, as well as the Classic Editor. You can define this central color palette through the settings menu. All plugins that make use of WordPress' color picker can benefit from this plugin as well.
+This plugin allows you to manage a site-wide central color palette for an uniform look'n'feel. The palette of the new block editor and the Theme Customizer are supported, as well as the classic editor. You can define this central color palette through the settings menu. All plugins that make use of WordPress' color picker can benefit from this plugin as well.
 
-Also this plugin replaces the color picker for choosing a text or background color found inside the Classic Editor with a bigger and customizable color grid.
+Also this plugin replaces the color picker for choosing a text or background color found inside the classic editor with a bigger and customizable color grid.
 
 For an easy migration between WordPress installations you can export and import your palette settings and colors.
 
@@ -68,9 +68,9 @@ Please [contact me](http://wordpress.org/support/plugin/kt-tinymce-color-grid) a
 == Screenshots ==
 
 1. The Color Palette Editor
-2. The new Block Editor is supported
+2. The new block editor is supported
 3. Custom palette for the Theme Customizer
-4. Legacy support for the Classic Editor
+4. Legacy support for the classic editor
 
 == Changelog ==
 
@@ -104,7 +104,7 @@ Fixed bug: new palette color are not save due to logic error
 - Fixed JavaScript bug
 
 = 1.13 =
-- Added Gutenberg/Block Editor support
+- Added Gutenberg/block editor support
 - Transparency channel is now always visible inside the palette editor
 - Transparency can now be toggled individually for those integrations that use it
 - Colors can be deactivated to hide them inside the block editor but retain their assignment on a block level
@@ -254,7 +254,7 @@ Fixes incompatibility with Elementor Pro and added support for Neve Theme
 Fixes broken import
 
 = 1.13 =
-Adds Gutenberg/Block Editor support and more export formats
+Adds Gutenberg/block editor support and more export formats
 
 = 1.12.6 =
 Customizer palette breaks into rows of 8 rows
