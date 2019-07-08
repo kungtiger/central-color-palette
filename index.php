@@ -37,6 +37,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         const CLAMPS = 'kt_color_grid_clamps';
         const PALETTE = 'kt_color_grid_palette';
         const CUSTOMIZER = 'kt_color_grid_customizer';
+        const FONTPRESS = 'kt_color_grid_fontpress';
         const ELEMENTOR = 'kt_color_grid_elementor';
         const GENERATEPRESS = 'kt_color_grid_gp';
         const GENERATEPRESS_ALPHA = 'kt_color_grid_gp_alpha';
@@ -145,6 +146,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 case 'page-builder-framework': return defined('WPBF_VERSION');
                 case 'hestia-theme': return defined('HESTIA_VERSION');
                 case 'neve-theme': return defined('NEVE_VERSION');
+                case 'fontpress': return defined('FP_VER') && version_compare(FP_VER, '3.03', '>=');
             }
             return false;
         }
@@ -319,6 +321,54 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             if ($this->supports('hestia-theme') && $integrate_customizer) {
                 add_filter('hestia_accent_color_palette', array($this, 'hestia_integration'));
             }
+
+            if ($this->supports('fontpress') && get_option(self::FONTPRESS)) {
+                add_action('admin_menu', array($this, 'fontpress_admin_menu'), 11);
+                add_action('admin_enqueue_scripts', array($this, 'fontpress_enqueue_scripts'), 11);
+                remove_action('admin_footer', 'fp_shortcode_scripts');
+                add_action('admin_footer', array($this, 'fontpress_shortcode_scripts'));
+            }
+        }
+
+        /**
+         * Integrate FontPress Manager
+         * @since 1.14
+         */
+        public function fontpress_enqueue_scripts() {
+            wp_enqueue_style(self::KEY . '-colpicker', KT_CENTRAL_PALETTE_URL . 'css/fontpress-colpicker.css', array('fp-colpick'), KT_CENTRAL_PALETTE);
+            wp_enqueue_script(self::KEY . '-colpicker', KT_CENTRAL_PALETTE_URL . 'js/fontpress-colpicker.js', array('jquery'), KT_CENTRAL_PALETTE);
+            wp_localize_script(self::KEY . '-colpicker', 'kt_colpicker_palette', $this->get_colors());
+        }
+
+        /**
+         *
+         */
+        public function fontpress_admin_menu() {
+            $fontpress_hook = 'toplevel_page_fp_settings';
+            remove_action($fontpress_hook, 'fp_rule_manager');
+            add_action($fontpress_hook, array($this, 'fontpress_rule_manager'));
+        }
+
+        public function fontpress_rules_manager() {
+            $this->fontpress_call('fp_rule_manager');
+        }
+
+        public function fontpress_shortcode_scripts() {
+            $this->fontpress_call('fp_shortcode_scripts');
+        }
+
+        /**
+         * Replaces FontPress' colpicker.js
+         * @since 1.14
+         */
+        public function fontpress_call($fn) {
+            ob_start();
+            call_user_func($fn);
+            $html = ob_get_contents();
+            ob_end_clean();
+
+            $colpicker_url = FP_URL . '/js/colpick/js/colpick.min.js';
+            print str_replace($colpicker_url, KT_CENTRAL_PALETTE_URL . 'js/fontpress-colpicker.js');
         }
 
         /**
@@ -892,6 +942,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             $booleans = array(
                 'kt_customizer' => self::CUSTOMIZER,
                 'kt_elementor' => self::ELEMENTOR,
+                'kt_fontpress' => self::FONTPRESS,
                 'kt_generatepress' => self::GENERATEPRESS,
                 'kt_generatepress_alpha' => self::GENERATEPRESS_ALPHA,
                 'kt_oceanwp' => self::OCEANWP,
@@ -1027,6 +1078,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
                 self::VISUAL => false,
                 self::CUSTOMIZER => false,
                 self::ELEMENTOR => false,
+                self::FONTPRESS => false,
                 self::OCEANWP => false,
                 self::OCEANWP_ALPHA => false,
                 self::GENERATEPRESS => false,
@@ -1968,6 +2020,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             $integrations = array(
                 array('beaverbuilder', self::BEAVERBUILDER, __('Beaver Builder', 'kt-tinymce-color-grid')),
                 array('elementor', self::ELEMENTOR, __('Elementor', 'kt-tinymce-color-grid')),
+                array('fontpress', self::FONTPRESS, __('FontPress', 'kt-tinymce-color-grid')),
                 array('generatepress', self::GENERATEPRESS, __('GeneratePress Premium', 'kt-tinymce-color-grid')),
                 array('oceanwp', self::OCEANWP, __('OceanWP', 'kt-tinymce-color-grid')),
             );
