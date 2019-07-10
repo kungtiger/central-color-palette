@@ -1,0 +1,24 @@
+.colpick_palette {
+    position: absolute;
+    top: 168px;
+    left: 7px;
+}
+.colpick_palette_color {
+    float: left;
+    clear: none;
+    width: 21px;
+    height: 21px;
+    margin: 0 3px 3px 0;
+    border: 1px solid #999;
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 1px #FFF;
+    transition: border-color .100s linear;
+    cursor: pointer;
+}
+.colpick_palette_color:hover {
+    border-color: #444;
+}
+.colpick_palette_color:nth-child(10n+1) {
+    margin-right: 0 !important;
+    clear: left;
+}

@@ -369,7 +369,7 @@ Version: 1.0
                         // Palette
                         if ($.isArray(options.palette) && options.palette.length) {
                             var $palette = $('<div class="colpick_palette"></div>').appendTo(cal);
-                            var per_row = 8, color_size = 25;
+                            var per_row = 10, color_size = 24;
                             $.each(options.palette, function() {
                                 var color = $('<div class="colpick_palette_color"/>');
                                 color.data('color', '' + this);

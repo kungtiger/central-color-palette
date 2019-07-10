@@ -4,7 +4,7 @@
  * Plugin Name: Central Color Palette
  * Plugin URI: https://wordpress.org/plugins/kt-tinymce-color-grid
  * Description: Manage a site-wide central color palette for an uniform look'n'feel! Supports the new block editor, theme customizer and many themes and plugins.
- * Version: 1.13.8
+ * Version: 1.14
  * Author: Gáravo
  * Author URI: http://profiles.wordpress.org/kungtiger
  * License: GPL2
@@ -13,7 +13,7 @@
  */
 
 if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
-    define('KT_CENTRAL_PALETTE', '1.13.8');
+    define('KT_CENTRAL_PALETTE', '1.14');
     define('KT_CENTRAL_PALETTE_DIR', plugin_dir_path(__FILE__));
     define('KT_CENTRAL_PALETTE_URL', plugin_dir_url(__FILE__));
     define('KT_CENTRAL_PALETTE_BASENAME', plugin_basename(__FILE__));
@@ -248,6 +248,16 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                         $this->render_map();
                         break;
 
+                    case '1.13':
+                    case '1.13.1':
+                    case '1.13.2':
+                    case '1.13.3':
+                    case '1.13.4':
+                    case '1.13.5':
+                        $version = '1.14';
+                        // Migrate options into one assocciative array
+                        break;
+
                     default:
                         $version = KT_CENTRAL_PALETTE;
                 }
@@ -331,7 +341,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         }
 
         /**
-         * Integrate FontPress Manager
+         * FontPress scripts
          * @since 1.14
          */
         public function fontpress_enqueue_scripts() {
@@ -341,7 +351,8 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         }
 
         /**
-         *
+         * Replace FontPress' rule manager menu entry
+         * @since 1.14
          */
         public function fontpress_admin_menu() {
             $fontpress_hook = 'toplevel_page_fp_settings';
