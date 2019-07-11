@@ -1,8 +1,8 @@
 === Central Color Palette ===
 Contributors: kungtiger
 Requires at least: 3.5
-Tested up to: 5.1
-Stable tag: 1.13.8
+Tested up to: 5.2
+Stable tag: 1.13.11
 Requires PHP: 5.3
 Tags: color, customizer, editor, gutenberg, palette, picker, tinymce
 License: GPLv2 or later
@@ -24,6 +24,7 @@ Central Color Palette supports these plugins and themes:
 - [Astra Theme](https://wpastra.com)
 - [Beaver Builder](https://www.wpbeaverbuilder.com)
 - [Elementor](https://wordpress.org/plugins/elementor)
+- [FontPress](https://lcweb.it/fontpress)
 - [GeneratePress Premium](https://generatepress.com/premium)
 - [Hestia Theme](https://wordpress.org/themes/hestia)
 - [Neve Theme](https://wordpress.org/themes/neve)
@@ -74,8 +75,21 @@ Please [contact me](http://wordpress.org/support/plugin/kt-tinymce-color-grid) a
 
 == Changelog ==
 
+= 1.13.11 =
+Added support for FontPress
+
+= 1.13.10 =
+- Added "Clear Color" cell to the picker of the classic editor when only using the palette
+- Fixed unset variable warning when saving an empty palette (thanks to @cadiz)
+- Fixed syntax error for older PHP versions
+
+= 1.13.9 =
+Classic Editor: Added an option to add a missing "Clear Color" cell to the picker when only using the palette
+
 = 1.13.8 =
-Elementor: Fixes broken alpha channel
+- Elementor: Fixes broken alpha channel
+- Elementor: Adds color names as mouse-over
+- Fixes bug which can cause a fatal error on page loads without a WP_Screen instance
 
 = 1.13.7 =
 - Gutenberg: Fixed overwritten color classes on front-end (thanks to @t0b1hh)
@@ -229,8 +243,17 @@ Initial release.
 
 == Upgrade Notice ==
 
+= 1.13.11 =
+Adds support for FontPress
+
+= 1.13.10 =
+Fixes two PHP bugs, and automatically adds the "Clear Color" cell to the picker of the classic editor when only using the palette
+
+= 1.13.9 =
+Adds an option to add a missing "Clear Color" cell to the picker when only using the palette
+
 = 1.13.8 =
-Fixes transparency for Element
+Fixes transparency for Element and a fatal error for some sites
 
 = 1.13.7 =
 Fixes palette colors not showing on the front-end and a bug with Elementor

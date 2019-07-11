@@ -1,5 +1,18 @@
+= 1.13.11 =
+Added support for FontPress
+
+= 1.13.10 =
+- Added "Clear Color" cell to the picker of the classic editor when only using the palette
+- Fixed unset variable warning when saving an empty palette (thanks to @cadiz)
+- Fixed syntax error for older PHP versions
+
+= 1.13.9 =
+Classic Editor: Added an option to add a missing "Clear Color" cell to the picker when only using the palette
+
 = 1.13.8 =
-Elementor: Fixes broken alpha channel
+- Elementor: Fixes broken alpha channel
+- Elementor: Adds color names as mouse-over
+- Fixes bug which can cause a fatal error on page loads without a WP_Screen instance
 
 = 1.13.7 =
 - Gutenberg: Fixed overwritten color classes on front-end (thanks to @t0b1hh)

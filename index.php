@@ -4,8 +4,8 @@
  * Plugin Name: Central Color Palette
  * Plugin URI: https://wordpress.org/plugins/kt-tinymce-color-grid
  * Description: Manage a site-wide central color palette for an uniform look'n'feel! Supports the new block editor, theme customizer and many themes and plugins.
- * Version: 1.14
- * Author: Gáravo
+ * Version: 1.13.11
+ * Author: Daniel Schneider
  * Author URI: http://profiles.wordpress.org/kungtiger
  * License: GPL2
  * License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -13,7 +13,7 @@
  */
 
 if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
-    define('KT_CENTRAL_PALETTE', '1.14');
+    define('KT_CENTRAL_PALETTE', '1.13.11');
     define('KT_CENTRAL_PALETTE_DIR', plugin_dir_path(__FILE__));
     define('KT_CENTRAL_PALETTE_URL', plugin_dir_url(__FILE__));
     define('KT_CENTRAL_PALETTE_BASENAME', plugin_basename(__FILE__));
@@ -254,8 +254,17 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                     case '1.13.3':
                     case '1.13.4':
                     case '1.13.5':
-                        $version = '1.14';
-                        // Migrate options into one assocciative array
+                    case '1.13.6':
+                    case '1.13.7':
+                    case '1.13.8':
+                    case '1.13.9':
+                        $version = '1.13.10';
+
+                        # re-render for obligatory "reset color"
+                        if (get_option('kt_color_grid_type') == 'palette') {
+                            $this->render_map();
+                        }
+                        delete_option('kt_color_grid_mce_reset');
                         break;
 
                     default:
@@ -333,53 +342,28 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             }
 
             if ($this->supports('fontpress') && get_option(self::FONTPRESS)) {
-                add_action('admin_menu', array($this, 'fontpress_admin_menu'), 11);
-                add_action('admin_enqueue_scripts', array($this, 'fontpress_enqueue_scripts'), 11);
-                remove_action('admin_footer', 'fp_shortcode_scripts');
-                add_action('admin_footer', array($this, 'fontpress_shortcode_scripts'));
+                add_action('admin_enqueue_scripts', array($this, 'fontpress_enqueue_scripts'));
             }
         }
 
         /**
          * FontPress scripts
-         * @since 1.14
+         * @since 1.13.11
          */
         public function fontpress_enqueue_scripts() {
-            wp_enqueue_style(self::KEY . '-colpicker', KT_CENTRAL_PALETTE_URL . 'css/fontpress-colpicker.css', array('fp-colpick'), KT_CENTRAL_PALETTE);
-            wp_enqueue_script(self::KEY . '-colpicker', KT_CENTRAL_PALETTE_URL . 'js/fontpress-colpicker.js', array('jquery'), KT_CENTRAL_PALETTE);
-            wp_localize_script(self::KEY . '-colpicker', 'kt_colpicker_palette', $this->get_colors());
-        }
+            $screen = get_current_screen();
+            if (!$screen) {
+                return;
+            }
 
-        /**
-         * Replace FontPress' rule manager menu entry
-         * @since 1.14
-         */
-        public function fontpress_admin_menu() {
-            $fontpress_hook = 'toplevel_page_fp_settings';
-            remove_action($fontpress_hook, 'fp_rule_manager');
-            add_action($fontpress_hook, array($this, 'fontpress_rule_manager'));
-        }
-
-        public function fontpress_rules_manager() {
-            $this->fontpress_call('fp_rule_manager');
-        }
-
-        public function fontpress_shortcode_scripts() {
-            $this->fontpress_call('fp_shortcode_scripts');
-        }
-
-        /**
-         * Replaces FontPress' colpicker.js
-         * @since 1.14
-         */
-        public function fontpress_call($fn) {
-            ob_start();
-            call_user_func($fn);
-            $html = ob_get_contents();
-            ob_end_clean();
-
-            $colpicker_url = FP_URL . '/js/colpick/js/colpick.min.js';
-            print str_replace($colpicker_url, KT_CENTRAL_PALETTE_URL . 'js/fontpress-colpicker.js');
+            // enqueue scripts for the rule manager and any post/page editor
+            if ($screen->id == 'toplevel_page_fp_settings' || $screen->base == 'post') {
+                wp_enqueue_style(self::KEY . '-colpicker', KT_CENTRAL_PALETTE_URL . 'css/fontpress-colpicker.css', array('fp-colpick'), KT_CENTRAL_PALETTE);
+                wp_enqueue_script(self::KEY . '-colpicker', KT_CENTRAL_PALETTE_URL . 'js/fontpress-colpicker.js', array('jquery'), KT_CENTRAL_PALETTE, true);
+                wp_localize_script(self::KEY . '-colpicker', 'kt_fontpress_palette', $this->get_palette(array(
+                    'status' => self::COLOR_ACTIVE,
+                )));
+            }
         }
 
         /**
@@ -416,7 +400,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         public function print_gutenberg_style() {
             if (is_admin()) {
                 $screen = get_current_screen();
-                if (!$screen->is_block_editor()) {
+                if (!$screen || !$screen->is_block_editor()) {
                     return;
                 }
             }
@@ -488,6 +472,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          */
         public function get_palette($options = '') {
             $options = wp_parse_args($options, array(
+                '_palette' => null,
                 'status' => array(self::COLOR_ACTIVE, self::COLOR_INACTIVE),
                 'chunk' => false,
                 'pad' => array(
@@ -507,8 +492,12 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 }
             }
 
+            $_palette = $options['_palette'];
+            if (!is_array($_palette)) {
+                $_palette = (array) get_option(self::PALETTE);
+            }
+
             $palette = array();
-            $_palette = (array) get_option(self::PALETTE);
             foreach ($_palette as $color) {
                 if (!$color) {
                     continue;
@@ -597,6 +586,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 'pad' => '#FFFFFF',
                 'hash' => true,
                 'default' => array(),
+                '_name' => false,
             ));
 
             $palette = array();
@@ -609,6 +599,12 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                     $color = $this->hex2rgba($color, $set['alpha']);
                 } else if (!$options['hash']) {
                     $color = ltrim($color, '#');
+                }
+                if ($options['_name']) {
+                    $color = array(
+                        'color' => $color,
+                        'name' => $set['name'],
+                    );
                 }
                 $palette[] = $color;
             }
@@ -656,6 +652,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          */
         public function elementor_styles() {
             wp_enqueue_style(self::KEY . '-elementor', KT_CENTRAL_PALETTE_URL . 'css/elementor.css', null, KT_CENTRAL_PALETTE);
+            wp_enqueue_script(self::KEY . '-iris', KT_CENTRAL_PALETTE_URL . 'js/iris.js', array('iris'), KT_CENTRAL_PALETTE);
         }
 
         /**
@@ -685,6 +682,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 'pad' => '#FFF',
                 'min' => 6,
                 'alpha' => true,
+                '_name' => true,
             ));
             $palette = array();
             for ($i = 1, $n = count($colors); $i <= $n; $i++) {
@@ -1016,21 +1014,23 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             $palette = array();
             $next_index = get_option(self::NEXT_INDEX, 1);
             $data = (array) $this->get_request('kt_palette');
-            foreach ($data['color'] as $i => $color) {
-                $color = $this->sanitize_color($color);
-                if (!$color) {
-                    continue;
-                }
+            if (isset($data['color']) && is_array($data['color'])) {
+                foreach ($data['color'] as $i => $color) {
+                    $color = $this->sanitize_color($color);
+                    if (!$color) {
+                        continue;
+                    }
 
-                $alpha = $this->sanitize_alpha($data['alpha'][$i]);
-                $name = $this->sanitize_textfield($data['name'][$i]);
-                $index = $data['index'][$i];
-                if (!is_numeric($index) || $index < 1) {
-                    $index = $next_index;
-                    $next_index++;
+                    $alpha = $this->sanitize_alpha($data['alpha'][$i]);
+                    $name = $this->sanitize_textfield($data['name'][$i]);
+                    $index = $data['index'][$i];
+                    if (!is_numeric($index) || $index < 1) {
+                        $index = $next_index;
+                        $next_index++;
+                    }
+                    $status = $data['status'][$i];
+                    $palette[] = compact('color', 'name', 'alpha', 'index', 'status');
                 }
-                $status = $data['status'][$i];
-                $palette[] = compact('color', 'name', 'alpha', 'index', 'status');
             }
             update_option(self::NEXT_INDEX, $next_index);
             update_option(self::PALETTE, $palette);
@@ -1542,13 +1542,14 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
          * @since 1.7
          * @return array [palette, rows, cols]
          */
-        protected function chunk_palette() {
+        protected function chunk_palette($_palette = null) {
             $palette = array();
             list($rows, $cols) = $this->get_map_size();
             if (get_option(self::VISUAL)) {
                 $palette = $this->get_palette(array(
                     'status' => self::COLOR_ACTIVE,
                     'chunk' => $rows,
+                    '_palette' => $_palette,
                 ));
             }
             return array($palette, $rows, $cols);
@@ -1562,24 +1563,28 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
         protected function get_map_size() {
             switch (get_option(self::TYPE, self::DEFAULT_TYPE)) {
                 case 'palette':
-                    $count = count($this->get_palette(array(
-                                'status' => self::COLOR_ACTIVE,
+                    $count = 1 + count($this->get_palette(array(
+                                        'status' => self::COLOR_ACTIVE,
                     )));
+
                     if ('even' == get_option(self::SPREAD, self::DEFAULT_SPREAD)) {
                         $cols = ceil(sqrt($count));
                         $rows = ceil($count / $cols);
                         return array($rows, $cols);
                     }
+
                     $fixed = get_option(self::CLAMPS, self::DEFAULT_CLAMPS);
                     $dynamic = ceil($count / $fixed);
                     if ('cols' == get_option(self::CLAMP, self::DEFAULT_CLAMP)) {
                         return array($dynamic, $fixed);
                     }
                     return array($fixed, $dynamic);
+
                 case 'rainbow':
                     $rows = get_option(self::ROWS, self::DEFAULT_ROWS);
                     $cols = get_option(self::COLS, self::DEFAULT_COLS);
                     return array($rows, $cols);
+
                 case 'block':
                     $size = get_option(self::SIZE, self::DEFAULT_SIZE);
                     $blocks = get_option(self::BLOCKS, self::DEFAULT_BLOCKS);
@@ -1598,6 +1603,9 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
         protected function add_row_to_map(&$map, &$palette, $row) {
             $cols = count($palette);
             for ($col = 0; $col < $cols; $col++) {
+                if ($palette[$col][$row]['color'] == 'reset') {
+                    continue;
+                }
                 $map[] = ltrim($palette[$col][$row]['color'], '#');
                 $map[] = $palette[$col][$row]['name'];
             }
@@ -1625,7 +1633,14 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
          * @return array
          */
         protected function render_palette() {
-            list($palette, $rows, $columns) = $this->chunk_palette();
+            $_palette = $this->get_palette(array(
+                'status' => self::COLOR_ACTIVE,
+            ));
+            $_palette[] = array(
+                'color' => 'reset',
+                'status' => self::COLOR_ACTIVE,
+            );
+            list($palette, $rows, $columns) = $this->chunk_palette($_palette);
             $map = array();
             for ($row = 0; $row < $rows; $row++) {
                 $this->add_row_to_map($map, $palette, $row);
@@ -1982,14 +1997,10 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ["' . $colors . '"];
             $add_title = esc_attr($_add);
 
             $add_to_customizer = esc_html__('Add to Theme Customizer', 'kt-tinymce-color-grid');
-            $natives = array();
             foreach ($this->native_palette_support as $native => $name) {
                 if ($this->supports($native)) {
-                    $natives[] = " / $name";
+                    $add_to_customizer .= " / $name";
                 }
-            }
-            if ($natives) {
-                $add_to_customizer .= implode('', $natives);
             }
 
             print "
