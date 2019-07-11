@@ -3,13 +3,13 @@
 **This is the development repository and is not intended for production deployment.
 For production releases please use the [WordPress Plugin Repository](https://wordpress.org/plugins/kt-tinymce-color-grid).**
 
-Contributors: kungtiger
-Requires at least: 3.5
-Tested up to: 5.0
-Stable tag: 1.13.11
-Requires PHP: 5.3
-Tags: color, customizer, editor, gutenberg, palette, picker, tinymce
-License: GPLv2 or later
+Contributors: kungtiger  
+Requires at least: 3.5  
+Tested up to: 5.0  
+Stable tag: 1.13.11  
+Requires PHP: 5.3  
+Tags: color, customizer, editor, gutenberg, palette, picker, tinymce  
+License: GPLv2 or later  
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 Manage a site-wide central color palette for an uniform look'n'feel! Supports the new block editor, Theme Customizer and many themes and plugins.
