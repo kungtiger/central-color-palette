@@ -1,8 +1,8 @@
 === Central Color Palette ===
 Contributors: kungtiger
 Requires at least: 3.5
-Tested up to: 5.2
-Stable tag: 1.13.11
+Tested up to: 5.3
+Stable tag: 1.14
 Requires PHP: 5.3
 Tags: color, customizer, editor, gutenberg, palette, picker, tinymce
 License: GPLv2 or later
@@ -21,12 +21,14 @@ For an easy migration between WordPress installations you can export and import 
 **Theme/Plugin Support**
 Central Color Palette supports these plugins and themes:
 
+- [Advanced Custom Fields](https://www.advancedcustomfields.com/)
 - [Astra Theme](https://wpastra.com)
 - [Beaver Builder](https://www.wpbeaverbuilder.com)
 - [Elementor](https://wordpress.org/plugins/elementor)
 - [FontPress](https://lcweb.it/fontpress)
 - [GeneratePress Premium](https://generatepress.com/premium)
 - [Hestia Theme](https://wordpress.org/themes/hestia)
+- [Mega Max Menu](https://www.megamenu.com/)
 - [Neve Theme](https://wordpress.org/themes/neve)
 - [OceanWP](https://oceanwp.org)
 - [Page Builder Framework](https://wp-pagebuilderframework.com)
@@ -74,6 +76,14 @@ Please [contact me](http://wordpress.org/support/plugin/kt-tinymce-color-grid) a
 4. Legacy support for the classic editor
 
 == Changelog ==
+
+= 1.14 =
+- Added support for [Advanced Custom Fields](https://www.advancedcustomfields.com)
+- Added support for [Mega Max Menu](https://www.megamenu.com)
+- Added option for global CSS variables
+- Added export type for CSS variables
+- Added color types
+- Updated CSS to match WP 5.3
 
 = 1.13.11 =
 Added support for FontPress
@@ -242,6 +252,9 @@ Fixes an error when using more than one TinyMCE
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.14 =
+Adds support for Advanced Custom Fields, Mega Max Menu, global CSS variables and color types
 
 = 1.13.11 =
 Adds support for FontPress

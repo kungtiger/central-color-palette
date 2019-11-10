@@ -441,13 +441,13 @@
             if (this instanceof kt_Color && $currentColor) {
                 $this = $currentColor;
                 hex = this._hex;
-                $this.siblings('.hex').val(hex);
-                $this.siblings('.alpha').val(this._alpha);
+                $this.siblings('.color-input').val(hex);
+                $this.siblings('.alpha-input').val(this._alpha);
                 rgba = this.rgba();
             } else if ($color) {
                 $this = $color;
-                hex = $this.siblings('.hex').val();
-                render.hex(hex, $this.siblings('.alpha').val());
+                hex = $this.siblings('.color-input').val();
+                render.hex(hex, $this.siblings('.alpha-input').val());
                 rgba = render.rgba();
             } else {
                 var $Picker = $ColorEditor.children('.picker');
@@ -512,7 +512,7 @@
                 return;
             }
 
-            var hex = $picker.children('.hex').val();
+            var hex = $picker.children('.color-input').val();
             var name = getAutoName(hex);
             $name.val(name);
         },
@@ -617,8 +617,8 @@
         initAdjustHSL = function (e) {
             if (e.type == 'focusin') {
                 $currentColor = $(this).on('keydown', adjustHSL);
-                var hex = $currentColor.siblings('.hex').val();
-                var alpha = $currentColor.siblings('.alpha').val();
+                var hex = $currentColor.siblings('.color-input').val();
+                var alpha = $currentColor.siblings('.alpha-input').val();
                 color.hex(hex, alpha);
             } else {
                 hidePicker();
@@ -778,6 +778,16 @@
         $('#kt_export_css_form').on('change', 'input', renderCSSPreview);
         renderCSSPreview();
 
+        var renderCSSVarsPreview = function () {
+            $('#kt_export_css_vars_preview pre').text(cssVarsPreviewTemplate({
+                prefix: _('kt_export_css_vars_prefix').value,
+                suffix: _('kt_export_css_vars_suffix').value
+            }));
+        };
+        var cssVarsPreviewTemplate = wp.template('kt_export_css_vars_preview');
+        $('#kt_export_css_vars_form').on('change', 'input', renderCSSVarsPreview);
+        renderCSSVarsPreview();
+
         var renderSCSSPreview = function () {
             $('#kt_export_scss_preview pre').text(scssPreviewTemplate({
                 prefix: _('kt_export_scss_prefix').value,
@@ -799,7 +809,7 @@
             switchToTab('kt_tab_palette');
             $(color_template)
             .appendTo($ColorEditor)
-            .children('.hex').prop({
+            .children('.color-input').prop({
                 selectionStart: 1,
                 selectionEnd: 7
             }).trigger('focus');
@@ -832,9 +842,9 @@
         .on('focus blur', '.picker', initSort)
         .on('click', '.color', togglePicker)
         .on('focus blur', '.color', initAdjustHSL)
-        .on('change', '.hex', updateColor)
-        .on('change', '.alpha', updateAlpha)
-        .on('focus blur', '.hex', autoRevert)
+        .on('change', '.color-input', updateColor)
+        .on('change', '.alpha-input', updateAlpha)
+        .on('focus blur', '.color-input', autoRevert)
         .on('click', '.sort-up', sortUp)
         .on('click', '.sort-down', sortDown)
         .on('keydown', 'input', focusParent)

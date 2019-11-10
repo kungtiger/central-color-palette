@@ -11,7 +11,7 @@
         if (!$.isArray(palette) || !palette.length) {
             return this;
         }
-
+        
         return this.each(function () {
             // Let's get our colpick wrapper
             var $this = $(this), id = $this.data('colpickId');
@@ -40,8 +40,8 @@
 
                 // Simulate a change event
                 var instance = $colpick.data('colpick'),
-                hex = $.colpick.hsbToHex(instance.color),
-                rgb = $.colpick.hsbToRgb(instance.color);
+                        hex = $.colpick.hsbToHex(instance.color),
+                        rgb = $.colpick.hsbToRgb(instance.color);
                 // 5th argument needs to be false or input fields won't update
                 var args = [instance, hex, rgb, instance.el, false];
                 instance.onChange.apply($colpick.parent(), args);

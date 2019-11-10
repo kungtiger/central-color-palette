@@ -1,17 +1,18 @@
 $bar_bg: #FDFDFD;
-$border_color: #E5E5E5;
-$toolbar_border: #D2D2D2;
-$focus_color: #5B9DD9;
+$border_color: #ccd0d4;
+$toolbar_border: $border_color;
+$focus_color: #007cba;
+$tab_active_color: #0071a1;
 $btn_border: #aaa;
 
 $width: 680px;
 
 
-#kt_picker {
+.kt-color-picker,
+.kt-color-type-select {
     display: inline-block;
     position: absolute;
     z-index: 999999;
-    width: 225px;
     border: 1px solid #CCC;
     background-color: #FFF;
     -webkit-box-shadow: 0 3px 5px rgba(0,0,0,.2);
@@ -19,6 +20,27 @@ $width: 680px;
     &.hidden {
         display: none;
     }
+}
+.kt-color-type-select {
+    overflow: hidden;
+    span {
+        display: inline-block;
+        width: 100%;
+        float: left;
+        clear: both;
+        padding: 5px 8px;
+        cursor: pointer;
+        &.active, &.active:hover {
+            color: #fff;
+            background-color: $focus_color;
+        }
+        &:hover {
+            background-color: #eee;
+        }
+    }
+}
+.kt-color-picker {
+    width: 225px;
 
     * {
         position: absolute;
@@ -121,6 +143,15 @@ input[name='kt_type'] {
     }
     .type-chooser .button-primary {
         display: none;
+    }
+    .type-chooser {
+        $r: 3px;
+        .button:last-child, .button:nth-last-child(2){
+            border-radius: 0 $r $r 0;
+        }
+        .button:first-child, .button:nth-child(2) {
+            border-radius: $r 0 0 $r;
+        }
     }
     p:last-child {
         margin-bottom: 1em !important;
@@ -275,9 +306,6 @@ input[name='kt_type'] {
                 border-bottom-color: #FFF;
                 background-color: #fff;
                 color: #111;
-                .label {
-                    font-weight: 600;
-                }
             }
         }
     }
@@ -300,7 +328,8 @@ input[name='kt_type'] {
         text-align: center;
     }
     &.show-palette.no-active .empty-editor .no-active,
-    &.show-trash.no-inactive .empty-editor .no-inactive {
+    &.show-trash.no-inactive .empty-editor .no-inactive,
+    &.loading .empty-editor .loading {
         display: inline;
     }
 
@@ -356,7 +385,6 @@ input[name='kt_type'] {
         display: inline-block;
         padding: 1px;
         vertical-align: top;
-        border-color: #ccc;
     }
     .sample {
         position: relative;
@@ -380,30 +408,40 @@ input[name='kt_type'] {
             bottom: 0;
         }
     }
-    .hex {
+    .color-input {
         font-family: monospace;
-        &:invalid {
-            background-color: #FEE;
-            border-color: #A00;
-            z-index: 3;
-        }
     }
-    .picker:focus, .picker.grabbed {
+    .picker:focus, .color:focus, .picker .grip:focus, .picker button:focus {
         border-color: $focus_color !important;
-        -webkit-box-shadow: 0 0 3px rgba(0,115,170,.8);
-        box-shadow: 0 0 3px rgba(0,115,170,.8);
+        -webkit-box-shadow: 0 0 0 1px $focus_color;
+        box-shadow: 0 0 0 1px $focus_color;
+    }
+    .picker:focus, .color:focus {
         z-index: 3;
     }
     button.autoname {
         display: none;
         z-index: 6;
     }
-    &.autoname .name.autoname ~ button.autoname {
+    &.autoname button.autoname {
         display: inline-block;
     }
     .remove {
         &:hover, &:focus, &:active {
             color: #C00;
+        }
+    }
+
+    .color-input, .alpha-input, .name {
+        min-height: 28px;
+        border-radius: 0;
+    }
+    .color, .color-input, .alpha-input, .name {
+        border-color: #7e8993;
+        &:focus {
+            border-color: $focus_color;
+            box-shadow: 0 0 0 1px $focus_color;
+            outline: 2px solid transparent;
         }
     }
 }
@@ -481,6 +519,7 @@ input[name='kt_type'] {
             line-height: 30px;
             background-color: #FFF;
         }
+        &.loading,
         &.show-palette.no-active,
         &.show-trash.no-inactive {
             .empty-editor {
@@ -524,10 +563,16 @@ input[name='kt_type'] {
         }
         button, .grip {
             opacity: 0;
+            &:focus, &:hover {
+                opacity: 1;
+            }
         }
-        .picker:hover {
+        .picker:hover, .picker:focus {
             button, .grip {
                 opacity: 1;
+            }
+            .color-input {
+                padding-right: 26px;
             }
         }
         .color {
@@ -536,7 +581,7 @@ input[name='kt_type'] {
             height: 55px;
             opacity: 1;
         }
-        .alpha, .activate, .deactivate, .index-debug {
+        .alpha-input, .activate, .deactivate, .index-debug {
             bottom: 8px;
         }
         .remove, .activate, .deactivate {
@@ -553,22 +598,32 @@ input[name='kt_type'] {
             display: flex;
         }
 
-        .hex, .alpha {
+        .color-input, .alpha-input {
             left: 89px;
-            width: 100px;
+            width: 190px;
         }
         .name {
-            left: 188px;
-            width: 430px;
+            left: 278px;
+            width: 340px;
         }
+        button.type-select,
         button.autoname {
-            right: 62px;
             height: 28px;
             padding: 4px 0;
             border-radius: 0;
         }
-        &.autoname .name.autoname {
-            padding-right: 40px;
+        button.type-select {
+            left: 253px;
+            &.active {
+                opacity: 1;
+                background-color: #F2F2F2;
+            }
+        }
+        button.autoname {
+            right: 62px;
+        }
+        &.autoname .name {
+            padding-right: 34px;
         }
         .sort-up, .sort-down {
             left: 10px;
@@ -682,6 +737,7 @@ input[name='kt_type'] {
         &.show-trash .picker-inactive {
             display: block;
         }
+        &.loading,
         &.show-palette.no-active,
         &.show-trash.no-inactive {
             .empty-editor {
@@ -712,13 +768,13 @@ input[name='kt_type'] {
             margin-left: $margin;
             padding: 1px;
         }
-        .hex {
+        .color-input {
             margin-top: 1em;
         }
         button.autoname {
             margin: -7px 0 0 -52px;
         }
-        &.autoname .name.autoname {
+        &.autoname .name {
             padding-right: 50px;
         }
     }
@@ -727,7 +783,7 @@ input[name='kt_type'] {
 
 // right-to-left locales
 body.rtl {
-    #kt_picker .marker {
+    .kt-color-picker .marker {
         margin: -8px -8px 0 0;
     }
     #kt_color_grid {
@@ -796,7 +852,7 @@ body.rtl {
                 left: 14px;
                 right: auto;
             }
-            .hex, .alpha {
+            .color-input, .alpha-input {
                 left: auto;
                 right: 89px;
             }
@@ -808,7 +864,7 @@ body.rtl {
                 left: 62px;
                 right: auto;
             }
-            &.autoname .name.autoname {
+            &.autoname .name {
                 padding-left: 40px;
                 padding-right: 5px;
             }
@@ -855,7 +911,7 @@ body.rtl {
             button.autoname {
                 margin: -7px 0 0 -52px;
             }
-            &.autoname .name.autoname {
+            &.autoname .name {
                 padding-right: 50px;
             }
         }

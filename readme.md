@@ -6,7 +6,7 @@ For production releases please use the [WordPress Plugin Repository](https://wor
 Contributors: kungtiger  
 Requires at least: 3.5  
 Tested up to: 5.0  
-Stable tag: 1.13.11  
+Stable tag: 1.14  
 Requires PHP: 5.3  
 Tags: color, customizer, editor, gutenberg, palette, picker, tinymce  
 License: GPLv2 or later  
@@ -25,6 +25,7 @@ For an easy migration between WordPress installations you can export and import 
 ## Theme/Plugin Support
 Central Color Palette supports these plugins and themes:
 
+- [Advanced Custom Fields](https://www.advancedcustomfields.com/)
 - [Astra Theme](https://wpastra.com)
 - [Beaver Builder](https://www.wpbeaverbuilder.com)
 - [Elementor](https://wordpress.org/plugins/elementor)
@@ -32,6 +33,7 @@ Central Color Palette supports these plugins and themes:
 - [GeneratePress Premium](https://generatepress.com/premium)
 - [Hestia Theme](https://wordpress.org/themes/hestia)
 - [Neve Theme](https://wordpress.org/themes/neve)
+- [Mega Max Menu](https://www.megamenu.com/)
 - [OceanWP](https://oceanwp.org)
 - [Page Builder Framework](https://wp-pagebuilderframework.com)
 
