@@ -6,7 +6,7 @@ For production releases please use the [WordPress Plugin Repository](https://wor
 Contributors: kungtiger  
 Requires at least: 3.5  
 Tested up to: 5.0  
-Stable tag: 1.14  
+Stable tag: 1.14.4  
 Requires PHP: 5.3  
 Tags: color, customizer, editor, gutenberg, palette, picker, tinymce  
 License: GPLv2 or later  

@@ -2,7 +2,7 @@
 Contributors: kungtiger
 Requires at least: 3.5
 Tested up to: 5.3
-Stable tag: 1.14
+Stable tag: 1.14.4
 Requires PHP: 5.3
 Tags: color, customizer, editor, gutenberg, palette, picker, tinymce
 License: GPLv2 or later
@@ -76,6 +76,20 @@ Please [contact me](http://wordpress.org/support/plugin/kt-tinymce-color-grid) a
 4. Legacy support for the classic editor
 
 == Changelog ==
+
+= 1.14.4 =
+Fixed broken integration for Elementor 2.9 (thanks to @blackeye0013)
+
+= 1.14.3 =
+Fixed missing percentage characters for HSL exports
+
+= 1.14.2 =
+- Fixed support for Elementor's new color picker
+- Added support for [Suki Theme](https://sukiwp.com/)
+- Fixed broken sprintf for alpha checkboxes
+
+= 1.14.1 =
+Added color formats to CSS/SCSS based exports
 
 = 1.14 =
 - Added support for [Advanced Custom Fields](https://www.advancedcustomfields.com)
@@ -252,6 +266,18 @@ Fixes an error when using more than one TinyMCE
 Initial release.
 
 == Upgrade Notice ==
+
+= 1.14.4 =
+Fixes broken Elementor integration
+
+= 1.14.3 =
+Fixes missing percentage character for HSL exports
+
+= 1.14.2 =
+Adds support for Suki Theme and fixes broken integration with Elementor's new color picker
+
+= 1.14.1 =
+Adds color formats to CSS/SCSS exports
 
 = 1.14 =
 Adds support for Advanced Custom Fields, Mega Max Menu, global CSS variables and color types

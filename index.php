@@ -4,8 +4,8 @@
  * Plugin Name: Central Color Palette
  * Plugin URI: https://wordpress.org/plugins/kt-tinymce-color-grid
  * Description: Manage a site-wide central color palette for an uniform look'n'feel! Supports the new block editor, theme customizer and many themes and plugins.
- * Version: 1.14-dev
- * Author: Daniel Schneider
+ * Version: 1.14.4
+ * Author: Daniel Menzies
  * Author URI: http://profiles.wordpress.org/kungtiger
  * License: GPL2
  * License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -13,7 +13,7 @@
  */
 
 if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
-    define('KT_CENTRAL_PALETTE', '1.14');
+    define('KT_CENTRAL_PALETTE', '1.14.4');
     define('KT_CENTRAL_PALETTE_DIR', plugin_dir_path(__FILE__));
     define('KT_CENTRAL_PALETTE_URL', plugin_dir_url(__FILE__));
     define('KT_CENTRAL_PALETTE_BASENAME', plugin_basename(__FILE__));
@@ -38,6 +38,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         const PALETTE = 'kt_color_grid_palette';
         const CUSTOMIZER = 'kt_color_grid_customizer';
         const ACF = 'kt_color_grid_acf';
+        const SUKI_THEME = 'kt_color_grid_suki_theme';
         const MEGAMAXMENU = 'kt_color_grid_megamax';
         const FONTPRESS = 'kt_color_grid_fontpress';
         const ELEMENTOR = 'kt_color_grid_elementor';
@@ -68,6 +69,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
         const DEFAULT_AXIS = 'rgb';
         const DEFAULT_TYPE = 'rainbow';
         const DEFAULT_LUMA = 'natural';
+        const DEFAULT_EXPORT_COLOR_FORMAT = 'hex';
         const MAX_FILE_SIZE = 256000;
         const COLOR_ACTIVE = 1;
         const COLOR_INACTIVE = 2;
@@ -152,6 +154,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 case 'fontpress': return defined('FP_VER') && version_compare(FP_VER, '3.03', '>=');
                 case 'acf': return defined('ACF');
                 case 'megamaxmenu': return defined('MEGAMENU_VERSION') && version_compare(MEGAMENU_VERSION, '2.7.2', '>=');
+                case 'suki_theme': return defined('SUKI_VERSION') && version_compare(SUKI_VERSION, '1.1.0', '>=');
             }
             return false;
         }
@@ -343,15 +346,25 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 add_action('acf/admin_print_scripts', $iris_integration);
             }
 
+            if ($this->supports('suki_theme') && get_option(self::SUKI_THEME)) {
+                add_action('suki/admin/dashboard/content', array($this, 'suki_hide_color_module'), 11);
+                add_action('customize_register', array($this, 'suki_remove_color_section'), 11);
+                for ($i = 1; $i < 9; $i++) {
+                    add_filter("suki/customizer/setting_value/color_palette_{$i}", array($this, 'suki_color_palette_overwrite'));
+                }
+            }
+
             if (get_option(self::CSS_VARS)) {
                 add_action('wp_print_styles', array($this, 'print_global_css_variables'));
             }
 
             if ($this->supports('elementor') && get_option(self::ELEMENTOR)) {
                 add_filter('elementor/editor/localize_settings', array($this, 'elementor_integration'), 100);
-                add_action('elementor/editor/after_enqueue_scripts', array($this, 'elementor_styles'));
-                add_action('elementor/editor/after_enqueue_scripts', array($this, 'iris_enqueue_script'));
-                add_action('elementor/editor/after_enqueue_styles', array($this, 'print_iris_style'));
+                if (version_compare(ELEMENTOR_VERSION, '2.8', '<')) {
+                    add_action('elementor/editor/after_enqueue_scripts', array($this, 'elementor_styles'));
+                    add_action('elementor/editor/after_enqueue_scripts', array($this, 'iris_enqueue_script'));
+                    add_action('elementor/editor/after_enqueue_styles', array($this, 'print_iris_style'));
+                }
             }
 
             if ($this->supports('generatepress') && get_option(self::GENERATEPRESS)) {
@@ -382,6 +395,24 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
             if ($this->supports('megamaxmenu') && get_option(self::MEGAMAXMENU)) {
                 add_filter('megamenu_spectrum_localisation', array($this, 'megamaxmenu_integration'));
             }
+        }
+
+        public function suki_remove_color_section() {
+            global $wp_customize;
+            #$wp_customize->remove_section('suki_section_color_palette');
+        }
+
+        public function suki_color_palette_overwrite($value) {
+            $palette = $this->get_colors();
+            $i = $this->preg_get('~color_palette_(\d+)$~', current_filter(), 0) - 1;
+            if (!isset($palette[$i])) {
+                return $value;
+            }
+            return $palette[$i];
+        }
+
+        public function suki_hide_color_module() {
+            #print '<script type="text/javascript" id="kt-suki-theme-hide-color-module">document.getElementById("suki-admin-module--color-palette").remove();</script>';
         }
 
         public function print_global_css_variables() {
@@ -724,7 +755,7 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          * @since 1.10
          */
         public function elementor_styles() {
-            wp_enqueue_style(self::KEY . '-elementor', KT_CENTRAL_PALETTE_URL . 'integration/elementor/elementor.css', null, KT_CENTRAL_PALETTE);
+            #wp_enqueue_style(self::KEY . '-elementor', KT_CENTRAL_PALETTE_URL . 'integration/elementor/elementor.css', null, KT_CENTRAL_PALETTE);
         }
 
         /**
@@ -734,13 +765,16 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
          * @return array
          */
         public function elementor_integration($config) {
-            $config['schemes'] = array(
-                'items' => array(
-                    'color-picker' => array(
-                        'items' => $this->elementor_palette(),
-                    ),
-                ),
-            );
+            if (!isset($config['schemes'])) {
+                $config['schemes'] = array('items' => array());
+            }
+
+            if (!isset($config['schemes']['items']['color-picker'])) {
+                $config['schemes']['items']['color-picker'] = array('items' => array());
+            }
+
+            $config['schemes']['items']['color-picker']['items'] = $this->elementor_palette();
+
             return $config;
         }
 
@@ -757,9 +791,21 @@ if (defined('ABSPATH') && !class_exists('kt_Central_Palette')) {
                 '_force_alpha' => true,
                 '_name' => true,
             ));
+
+            $palette_version = false;
+            if (version_compare(ELEMENTOR_VERSION, '2.8', '>=')) {
+                $palette_version = '2.8';
+            }
+
             $palette = array();
             for ($i = 1, $n = count($colors); $i <= $n; $i++) {
-                $palette[$i] = array('value' => $colors[$i - 1]);
+                switch ($palette_version) {
+                    case '2.8':
+                        $palette[$i] = array('value' => $colors[$i - 1]['color']);
+                        break;
+                    default:
+                        $palette[$i] = array('value' => $colors[$i - 1]);
+                }
             }
             return $palette;
         }
@@ -1044,6 +1090,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ' . $colors . ';
                 'kt_elementor' => self::ELEMENTOR,
                 'kt_css_vars' => self::CSS_VARS,
                 'kt_acf' => self::ACF,
+                'kt_suki_theme' => self::SUKI_THEME,
                 'kt_fontpress' => self::FONTPRESS,
                 'kt_megamaxmenu' => self::MEGAMAXMENU,
                 'kt_generatepress' => self::GENERATEPRESS,
@@ -1186,6 +1233,7 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ' . $colors . ';
                 self::CUSTOMIZER => false,
                 self::CSS_VARS => false,
                 self::ACF => false,
+                self::SUKI_THEME => false,
                 self::ELEMENTOR => false,
                 self::FONTPRESS => false,
                 self::MEGAMAXMENU => false,
@@ -1577,61 +1625,85 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ' . $colors . ';
         }
 
         public function export_css() {
-            $palette = $this->get_palette();
-            if (!$palette) {
-                return '';
-            }
-
-            $css = array();
-            $add_alpha = $this->get_request('kt_export_css_alpha');
-            $prefix = $this->get_request('kt_export_css_prefix');
-            $suffix = $this->get_request('kt_export_css_suffix');
-            foreach ($palette as $set) {
-                $hex = $set['hex'];
-                $alpha = $set['alpha'];
-                $name = $this->get_css_class_name($set, $prefix, $suffix);
-                $css[] = ".$name {
-  color: $hex" . ($add_alpha && $alpha < 100 ? ';
-  color: ' . $this->hex2rgba($hex, $alpha) : '') . " }\n";
-            }
-            return implode("\n", $css);
+            return $this->get_export('css', array(
+                        'line' => ".%1 {\n  color: %2;\n}\n",
+                        'compat' => ".%1 {\n  color: %2;\n  color: %3;\n}\n",
+            ));
         }
 
         public function export_css_vars() {
-            $palette = $this->get_palette();
-            if (!$palette) {
-                return '';
-            }
-
-            $vars = '';
-            $prefix = $this->get_request('kt_export_css_vars_prefix');
-            $suffix = $this->get_request('kt_export_css_vars_suffix');
-            foreach ($palette as $set) {
-                $hex = $set['hex'];
-                $alpha = $set['alpha'];
-                $name = $this->get_css_class_name($set, $prefix, $suffix);
-                $color = $this->hex2rgba($hex, $alpha);
-                $vars .= "\n  --$name: " . $color . ";";
-            }
-            return ':root {' . $vars . '}';
+            return $this->get_export('css_vars', array(
+                        'wrap' => ":root {%1\n}",
+                        'line' => "\n  --%1: %2;",
+                        'compat' => "\n  --%1: %2;\n  --%1: %3;",
+                        'glue' => '',
+                        'compat_glue' => "\n",
+            ));
         }
 
         public function export_scss() {
+            return $this->get_export('scss', array(
+                        'line' => "$%1: %2;\n",
+                        'glue' => '',
+            ));
+        }
+
+        protected function get_export($format, $args) {
             $palette = $this->get_palette();
             if (!$palette) {
                 return '';
             }
 
-            $vars = '';
-            $prefix = $this->get_request('kt_export_scss_prefix');
-            $suffix = $this->get_request('kt_export_scss_suffix');
+            $args = wp_parse_args($args, array(
+                'wrap' => '%1',
+                'line' => '',
+                'glue' => "\n",
+                'compat' => '',
+                'compat_glue' => "\n",
+            ));
+
+            $lines = array();
+            $add_compat = $this->get_request("kt_export_{$format}_color_compat");
+            $prefix = $this->get_request("kt_export_{$format}_prefix");
+            $suffix = $this->get_request("kt_export_{$format}_suffix");
+            $color_format = $this->get_request("kt_export_{$format}_color_format", self::DEFAULT_EXPORT_COLOR_FORMAT);
+            $compat = $add_compat && $color_format != 'hex' && $args['compat'];
+            $glue = $compat ? $args['compat_glue'] : $args['glue'];
+
             foreach ($palette as $set) {
-                $hex = $set['hex'];
-                $alpha = $set['alpha'];
+                $color = $this->get_css_export_color($set, $color_format);
                 $name = $this->get_css_class_name($set, $prefix, $suffix);
-                $vars .= "\$$name: " . $this->hex2rgba($hex, $alpha) . ";\n";
+                if ($compat) {
+                    $_line = str_replace('%1', $name, $args['compat']);
+                    $_line = str_replace('%2', $set['hex'], $_line);
+                    $lines[] = str_replace('%3', $color, $_line);
+                } else {
+                    $_line = str_replace('%1', $name, $args['line']);
+                    $lines[] = str_replace('%2', $color, $_line);
+                }
             }
-            return $vars;
+            return str_replace('%1', implode($glue, $lines), $args['wrap']);
+        }
+
+        protected function get_css_export_color($set, $format = 'hex') {
+            if ($format == 'rgb' || $format == 'rgba') {
+                $color = array_map('hexdec', str_split(substr($set['hex'], 1), 2));
+                if ($format == 'rgba') {
+                    $color[] = round($set['alpha'] / 100, 2);
+                    return 'rgba(' . implode(', ', $color) . ')';
+                }
+                return 'rgb(' . implode(', ', $color) . ')';
+            }
+
+            switch ($format) {
+                case 'hsl':
+                    return $this->hex2hsla($set['hex'], false);
+
+                case 'hsla':
+                    return $this->hex2hsla($set['hex'], $set['alpha']);
+            }
+
+            return $set['hex'];
         }
 
         protected function get_css_class_name($color, $prefix = '', $suffix = '') {
@@ -1970,7 +2042,6 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ' . $colors . ';
 
             do_meta_boxes(get_current_screen(), 'advanced', $this);
 
-            $picker_label = esc_attr__('Visual Color Picker', 'kt-tinymce-color-grid');
             $save_key = _x('S', 'accesskey for saving', 'kt-tinymce-color-grid');
             $save_label = $this->underline_accesskey(__('Save', 'kt-tinymce-color-grid'), $save_key);
             print "
@@ -2128,6 +2199,10 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ' . $colors . ';
 </p>";
         }
 
+        public function sort_interations($a, $b) {
+            return strcasecmp($a[2], $b[2]);
+        }
+
         /**
          * Print editor metabox
          * @since 1.9
@@ -2196,13 +2271,14 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ' . $colors . ';
   </div>";
 
             $integrations = array(
-                array('acf', self::ACF, __('Advanced Custom Fields', 'kt-tinymce-color-grid')),
-                array('beaverbuilder', self::BEAVERBUILDER, __('Beaver Builder', 'kt-tinymce-color-grid')),
-                array('elementor', self::ELEMENTOR, __('Elementor', 'kt-tinymce-color-grid')),
-                array('fontpress', self::FONTPRESS, __('FontPress', 'kt-tinymce-color-grid')),
-                array('megamaxmenu', self::MEGAMAXMENU, __('Mega Max Menu', 'kt-tinymce-color-grid')),
-                array('generatepress', self::GENERATEPRESS, __('GeneratePress Premium', 'kt-tinymce-color-grid')),
-                array('oceanwp', self::OCEANWP, __('OceanWP', 'kt-tinymce-color-grid')),
+                array('acf', self::ACF, __('Advanced Custom Fields', 'kt-tinymce-color-grid'), ''),
+                array('beaverbuilder', self::BEAVERBUILDER, __('Beaver Builder', 'kt-tinymce-color-grid'), ''),
+                array('elementor', self::ELEMENTOR, __('Elementor', 'kt-tinymce-color-grid'), ''),
+                array('fontpress', self::FONTPRESS, __('FontPress', 'kt-tinymce-color-grid'), ''),
+                array('megamaxmenu', self::MEGAMAXMENU, __('Mega Max Menu', 'kt-tinymce-color-grid'), ''),
+                array('generatepress', self::GENERATEPRESS, __('GeneratePress Premium', 'kt-tinymce-color-grid'), ''),
+                array('oceanwp', self::OCEANWP, __('OceanWP', 'kt-tinymce-color-grid'), ''),
+                array('suki_theme', self::SUKI_THEME, __('Suki Theme', 'kt-tinymce-color-grid'), __('Suki only supports up to eight colors.', 'kt-tinymce-color-grid')),
             );
             $supported_integrations = array();
             foreach ($integrations as $integration) {
@@ -2220,28 +2296,38 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ' . $colors . ';
   <div class="column">';
                 $_add_to = __('Integrate with %s', 'kt-tinymce-color-grid');
                 $_use_alpha = __('Add transparent colors to %s', 'kt-tinymce-color-grid');
+                usort($supported_integrations, array($this, 'sort_interations'));
                 foreach ($supported_integrations as $integration) {
-                    list($id, $option_name, $label) = $integration;
+                    list($id, $option_name, $label, $hint) = $integration;
                     $is_active = get_option($option_name);
                     $checked = $is_active ? ' checked="checked"' : '';
                     $has_alpha = isset($alpha_channel[$id]);
+                    $has_hint = $hint !== '';
 
                     printf('
     <p class="integrate-toggle">
       <input type="checkbox" id="kt_%1$s" name="kt_%1$s" tabindex="10" value="1"%3$s%4$s />
       <label for="kt_%1$s">%2$s</label>
-    </p>', $id, sprintf($_add_to, $label), $checked, $has_alpha ? ' data-form="1"' : '');
+    </p>', $id, sprintf($_add_to, $label), $checked, $has_alpha || $has_hint ? ' data-form="1"' : '');
 
-                    if ($has_alpha) {
-                        $alpha = get_option($alpha_channel[$id]);
-                        $hidden = $is_active ? '' : ' hide-if-js';
-                        $checked = $alpha ? ' checked="checked"' : '';
+                    $hidden = $is_active ? '' : ' hide-if-js';
+                    $alpha_checkbox = '';
+                    if ($has_alpha || $has_hint) {
+                        if ($has_alpha) {
+                            $alpha = get_option($alpha_channel[$id]);
+                            $checked = $alpha ? ' checked="checked"' : '';
+                            $alpha_checkbox = sprintf('
+      <input type="checkbox" id="kt_%1$s_alpha" name="kt_%1$s_alpha" tabindex="10" value="1"%2$s />
+      <label for="kt_%1$s_alpha">%3$s</label>', $id, $checked, sprintf($_use_alpha, $label));
+                        }
+
+                        if ($has_hint) {
+                            $hint = "<em>$hint</em></br>";
+                        }
 
                         printf('
-    <p class="integrate-form%2$s" id="kt_%1$s_form">
-      <input type="checkbox" id="kt_%1$s_alpha" name="kt_%1$s_alpha" tabindex="10" value="1"%3$s />
-      <label for="kt_%1$s_alpha">%4$s</label>
-    </p>', $id, $hidden, $checked, sprintf($_use_alpha, $label));
+    <p class="integrate-form%2$s" id="kt_%1$s_form">%3$s%4$s
+    </p>', $id, $hidden, $hint, $alpha_checkbox);
                     }
                 }
                 print '
@@ -2484,105 +2570,100 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ' . $colors . ';
 </p>';
         }
 
-        public function print_css_export_form() {
+        public function print_export_color_format_fields($format, $compat = false) {
+            $color_formats = array(
+                'hex' => __('Hexadecimal only', 'kt-tinymce-color-grid'),
+                'rgb' => __('RGB', 'kt-tinymce-color-grid'),
+                'rgba' => __('RGBA', 'kt-tinymce-color-grid'),
+                'hsl' => __('HSL', 'kt-tinymce-color-grid'),
+                'hsla' => __('HSLA', 'kt-tinymce-color-grid'),
+            );
+            $id = "kt_export_{$format}_color_format";
+            $cookie = esc_attr($this->get_cookie($id), self::DEFAULT_EXPORT_COLOR_FORMAT);
+            print "
+<p id='{$id}_wrap'>
+  <label for='$id'>" . esc_html__('Color Format', 'kt-tinymce-color-grid') . "</label>
+  <select id='$id' name='$id' class='export-color-format'>";
+            foreach ($color_formats as $format_id => $label) {
+                $label = esc_html($label);
+                $selected = $cookie == $format_id ? ' selected="selected"' : '';
+                print "
+    <option value='$format_id'$selected>$label</option>";
+            }
+            print '
+  </select>
+</p>';
+
+            if ($compat) {
+                $hidden = $cookie == 'hex' ? ' class="hide-if-js"' : '';
+                $id = "kt_export_{$format}_color_compat";
+                $cookie = esc_attr($this->get_cookie($id));
+                $checked = $cookie ? ' checked="checked"' : '';
+                print "
+<p id='{$id}_wrap'$hidden>
+  <input type='checkbox' id='$id' name='$id' value='1'$checked />
+  <label for='$id'>" . esc_html__('Add hexadecimal colors for compatibility', 'kt-tinymce-color-grid') . "</label>
+<p>";
+            }
+        }
+
+        public function print_export_affix_fields($format) {
             $affixes = array(
                 'prefix' => __('Class Prefix', 'kt-tinymce-color-grid'),
                 'suffix' => __('Class Suffix', 'kt-tinymce-color-grid'),
             );
             $_none = __('None', 'kt-tinymce-color-grid');
             foreach ($affixes as $affix => $label) {
-                $id = "kt_export_css_{$affix}";
+                $id = "kt_export_{$format}_{$affix}";
                 $cookie = esc_attr($this->get_cookie($id));
                 $label = esc_html($label);
                 print "
-<p>
+<p id='{$id}_wrap'>
   <label for='$id'>$label</label>
   <input type='text' id='$id' name='$id' value='$cookie' placeholder='$_none' />
 </p>";
             }
+        }
 
-            $alpha = 'kt_export_css_alpha';
-            list($key, $hex, $rgba) = $this->get_preview_color();
-            $alpha_checked = checked($this->get_cookie($alpha), 1, false);
+        protected function print_export_preview_template($format, $template, $compat = false) {
+            $_key = '{{ data.prefix }}{{ data.key }}{{ data.suffix }}';
+            $_color = '{{ data.color }}';
+
+            $template = str_replace('%1', $_key, $template);
+            $template = str_replace('%2', $_color, $template);
+
             print "
-<p>
-  <input type='checkbox' id='$alpha' name='$alpha' value='1'$alpha_checked />
-  <label for='$alpha'>" . esc_html__('Add Transparency Values', 'kt-tinymce-color-grid') . "</label>
-</p>
-<div id='kt_export_css_preview' class='export-preview'>
+<div id='kt_export_{$format}_preview' class='export-preview'>
   <strong>" . esc_html__('Preview', 'kt-tinymce-color-grid') . "</strong>
   <pre></pre>
 </div>
-<script type='text/template' id='tmpl-kt_export_css_preview'>.{{ data.prefix }}$key{{ data.suffix }} {
-  color: #$hex<# if (data.alpha) { #>;
-  color: rgba($rgba)<# } #> }</script>";
+<script type='text/template' id='tmpl-kt_export_{$format}_preview'>$template</script>";
+
+            if ($compat) {
+                $compat = str_replace('%1', $_key, $compat);
+                $compat = str_replace('%2', '{{ data.hex }}', $compat);
+                $compat = str_replace('%3', $_color, $compat);
+                print "
+<script type='text/template' id='tmpl-kt_export_{$format}_compat_preview'>$compat</script>";
+            }
+        }
+
+        public function print_css_export_form() {
+            $this->print_export_affix_fields('css');
+            $this->print_export_color_format_fields('css', true);
+            $this->print_export_preview_template('css', ".%1 {\n  color: %2;\n}", ".%1 {\n  color: %2;\n  color: %3;\n}");
         }
 
         public function print_css_vars_export_form() {
-            $affixes = array(
-                'prefix' => __('Variable Prefix', 'kt-tinymce-color-grid'),
-                'suffix' => __('Variable Suffix', 'kt-tinymce-color-grid'),
-            );
-            $_none = __('None', 'kt-tinymce-color-grid');
-            foreach ($affixes as $affix => $label) {
-                $id = "kt_export_css_vars_{$affix}";
-                $cookie = esc_attr($this->get_cookie($id));
-                $label = esc_html($label);
-                print "
-<p>
-  <label for='$id'>$label</label>
-  <input type='text' id='$id' name='$id' value='$cookie' placeholder='$_none' />
-</p>";
-            }
-
-            list($key, $_, $rgba) = $this->get_preview_color();
-            print "
-<div id='kt_export_css_vars_preview' class='export-preview'>
-  <strong>" . esc_html__('Preview', 'kt-tinymce-color-grid') . "</strong>
-  <pre></pre>
-</div>
-<script type='text/template' id='tmpl-kt_export_css_vars_preview'>:root {
-  --{{ data.prefix }}$key{{ data.suffix }}: rgba($rgba); }</script>";
+            $this->print_export_affix_fields('css_vars');
+            $this->print_export_color_format_fields('css_vars', true);
+            $this->print_export_preview_template('css_vars', ":root {\n  --%1: %2;\n}", ":root {\n  --%1: %2;\n  --%1: %3\n}");
         }
 
         public function print_scss_export_form() {
-            $affixes = array(
-                'prefix' => __('Variable Prefix', 'kt-tinymce-color-grid'),
-                'suffix' => __('Variable Suffix', 'kt-tinymce-color-grid'),
-            );
-            $_none = __('None', 'kt-tinymce-color-grid');
-            foreach ($affixes as $affix => $label) {
-                $id = "kt_export_scss_{$affix}";
-                $cookie = esc_attr($this->get_cookie($id));
-                $label = esc_html($label);
-                print "
-<p>
-  <label for='$id'>$label</label>
-  <input type='text' id='$id' name='$id' value='$cookie' placeholder='$_none' />
-</p>";
-            }
-            list($key, $_, $rgba) = $this->get_preview_color();
-            print "
-<div id='kt_export_scss_preview' class='export-preview'>
-  <strong>" . esc_html__('Preview', 'kt-tinymce-color-grid') . "</strong>
-  <pre></pre>
-</div>
-<script type='text/template' id='tmpl-kt_export_scss_preview'>\${{ data.prefix }}$key{{ data.suffix }}: rgba($rgba);</script>";
-        }
-
-        protected function get_preview_color() {
-            $colors = array(
-                array('pomgranate', 'E64B17', '230, 75, 23, 0.57'),
-                array('indigo', '4469C8', '68, 105, 200, 0.11'),
-                array('emerald', '51C556', '81, 197, 86, 0.82'),
-                array('amethyst', '9B44C8', '155, 68, 200, 0.41'),
-                array('irish-coffee', '6A3526', '106, 53, 38, 0.68'),
-            );
-            static $i = null;
-            if (!$i) {
-                $i = array_rand($colors);
-            }
-            return $colors[$i];
+            $this->print_export_affix_fields('scss');
+            $this->print_export_color_format_fields('scss');
+            $this->print_export_preview_template('scss', "\$%1: %2;", "\$%1: %2;\n\$%1: %3;");
         }
 
         /**
@@ -2870,10 +2951,14 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ' . $colors . ';
          * @param string $hex
          * @return array
          */
-        public function hex2rgb($hex) {
+        public function hex2rgb($hex, $as_string = false) {
             $color = (string) $this->sanitize_color($hex, false);
             $hex = str_split($color, 2);
-            return array_map('hexdec', $hex);
+            $vector = array_map('hexdec', $hex);
+            if (!$as_string) {
+                return $vector;
+            }
+            return 'rgb(' . implode(', ', $vector) . ')';
         }
 
         /**
@@ -2891,6 +2976,38 @@ jQuery.wp.wpColorPicker.prototype.options.palettes = ' . $colors . ';
             list($r, $g, $b) = $this->hex2rgb($hex);
             $a = round($alpha / 100, 2);
             return "rgba($r,$g,$b,$a)";
+        }
+
+        public function hex2hsla($hex, $alpha = false) {
+            $rgb = $this->hex2rgb($hex);
+            $r = $rgb[0] / 255;
+            $g = $rgb[1] / 255;
+            $b = $rgb[2] / 255;
+            $min = min($rgb) / 255;
+            $max = max($rgb) / 255;
+            $e = $max + $min;
+            $d = $max - $min;
+            $l = $e / 2;
+            $s = 0;
+            if ($l > 0 && $l < 1) {
+                $s = $d / ($l < .5 ? $e : (2 - $e));
+            }
+            $h = 0;
+            if ($d > 0) {
+                if ($max == $r) {
+                    $h = ($g - $b) / $d + ($g < $b ? 6 : 0);
+                } else if ($max == $g) {
+                    $h = ($b - $r) / $d + 2;
+                } else if ($max == $b) {
+                    $h = ($r - $g) / $d + 4;
+                }
+            }
+            $hsl = array(round($h * 60, 2) . '%', round($s * 100, 2) . '%', round($l * 100, 2) . '%');
+            if ($alpha === false) {
+                return 'hsl(' . implode(', ', $hsl) . ')';
+            }
+            $hsl[] = round($alpha / 100, 2);
+            return 'hsla(' . implode(', ', $hsl) . ')';
         }
 
     }

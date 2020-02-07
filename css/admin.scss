@@ -411,12 +411,10 @@ input[name='kt_type'] {
     .color-input {
         font-family: monospace;
     }
-    .picker:focus, .color:focus, .picker .grip:focus, .picker button:focus {
+    .picker:focus, .color:focus {
         border-color: $focus_color !important;
         -webkit-box-shadow: 0 0 0 1px $focus_color;
         box-shadow: 0 0 0 1px $focus_color;
-    }
-    .picker:focus, .color:focus {
         z-index: 3;
     }
     button.autoname {
@@ -563,11 +561,8 @@ input[name='kt_type'] {
         }
         button, .grip {
             opacity: 0;
-            &:focus, &:hover {
-                opacity: 1;
-            }
         }
-        .picker:hover, .picker:focus {
+        .picker:hover {
             button, .grip {
                 opacity: 1;
             }
@@ -664,23 +659,28 @@ input[name='kt_type'] {
         }
     }
 
-    #kt_backup_metabox .export-preview {
-        display: block;
-        position: absolute;
-        top: 0;
-        right: 1.3em;
-        width: 300px;
-        strong {
-            color: #999;
+    #kt_backup_metabox {
+        .export-format-form {
+            padding-bottom: .5em;
         }
-        pre {
-            margin: .2em 0;
-            padding: .4em;
-            border: 1px solid #ccc;
-            background-color: #fff;
-            font: .84em monospace;
-            color: #237;
-            white-space: pre-wrap;
+        .export-preview {
+            display: block;
+            position: absolute;
+            top: 2em;
+            right: 1.3em;
+            width: 300px;
+            strong {
+                color: #999;
+            }
+            pre {
+                margin: .2em 0;
+                padding: .4em;
+                border: 1px solid #ccc;
+                background-color: #fff;
+                font: .84em monospace;
+                color: #237;
+                white-space: pre-wrap;
+            }
         }
     }
 }

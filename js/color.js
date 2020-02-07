@@ -264,6 +264,28 @@
             return this._autoname;
         },
         setType: function(newType) {
+            if(typeof newType == 'string') {
+                switch(newType) {
+                    case 'rgb':
+                        newType = Color.RGB;
+                        break;
+                    case 'rgba':
+                        newType = Color.RGBA;
+                        break;
+                    case 'hsl':
+                        newType = Color.HSL;
+                        break;
+                    case 'hsla':
+                        newType = Color.HSLA;
+                        break;
+                    case 'hex':
+                        newType = Color.HEX;
+                        break;
+                    default:
+                        return this;
+                }
+            }
+
             var x = absround(newType);
             if(x >= Color.HEX || x <= Color.HSLA) {
                 this._type = x;

@@ -6,7 +6,7 @@
     $(function() {
         var updateView = function() {
             $Editor.removeClass('loading');
-            
+
             var $all = $Editor.children('.picker');
             $all.removeClass('first-picker last-picker');
 
@@ -153,36 +153,36 @@
             });
         }
 
-        var renderCSSPreview = function() {
-            $('#kt_export_css_preview pre').text(cssPreviewTemplate({
-                prefix: _('kt_export_css_prefix').value,
-                suffix: _('kt_export_css_suffix').value,
-                alpha: _('kt_export_css_alpha').checked ? 1 : 0
-            }));
-        };
-        var cssPreviewTemplate = wp.template('kt_export_css_preview');
-        $('#kt_export_css_form').on('change', 'input', renderCSSPreview);
-        renderCSSPreview();
+        var randomIndex = Math.floor(Math.random() * window.ntc.names.length);
+        var randomPreview = window.ntc.names[randomIndex];
+        var randomPreviewName = randomPreview[1].replace(/[^A-Za-z0-9_-]/, '');
+        var randomPreviewColor = '#' + randomPreview[0];
+        var randomPreviewAlpha = Math.floor(Math.random() * 101);
+        $.each(['css', 'css_vars', 'scss'], function() {
+            var base = 'kt_export_' + this;
+            var color = new kt_Color(randomPreviewColor);
+            color.setAlpha(randomPreviewAlpha);
+            var template = wp.template(base + '_preview');
+            var compat = wp.template(base + '_compat_preview');
+            var $pre = $('#' + base + '_preview pre');
+            var $format = $('#' + base + '_color_format');
+            var $compat = $('#' + base + '_color_compat');
+            var render = function() {
+                $pre.text(($compat.length && $compat.attr('checked') ? compat : template)({
+                    key: randomPreviewName,
+                    prefix: _(base + '_prefix').value,
+                    suffix: _(base + '_suffix').value,
+                    color: color.setType($format.val()).toString(),
+                    hex: color.getHEX()
+                }));
+            };
+            $('#' + base + '_form').on('change', 'input,select', render);
+            render();
+        });
 
-        var renderCSSVarsPreview = function() {
-            $('#kt_export_css_vars_preview pre').text(cssVarsPreviewTemplate({
-                prefix: _('kt_export_css_vars_prefix').value,
-                suffix: _('kt_export_css_vars_suffix').value
-            }));
-        };
-        var cssVarsPreviewTemplate = wp.template('kt_export_css_vars_preview');
-        $('#kt_export_css_vars_form').on('change', 'input', renderCSSVarsPreview);
-        renderCSSVarsPreview();
-
-        var renderSCSSPreview = function() {
-            $('#kt_export_scss_preview pre').text(scssPreviewTemplate({
-                prefix: _('kt_export_scss_prefix').value,
-                suffix: _('kt_export_scss_suffix').value
-            }));
-        };
-        var scssPreviewTemplate = wp.template('kt_export_scss_preview');
-        $('#kt_export_scss_form').on('change', 'input', renderSCSSPreview);
-        renderSCSSPreview();
+        $('#kt_backup_metabox').on('change', '.export-color-format', function() {
+            $('#' + this.id.substring(0, this.id.length - 6) + 'compat_wrap').toggleClass('hide-if-js', $(this).val() == 'hex');
+        });
 
         $('#kt_upload').on('change', function() {
             $('#kt_upload_label').addClass('disabled');

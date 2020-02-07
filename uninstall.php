@@ -4,7 +4,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit(403);
 }
 
-foreach (array('customizer', 'block_size', 'block_axis', 'gutenberg', 'gutenberg_merge', 'gutenberg_force', 'elementor', 'fontpress', 'gp', 'gp_alpha', 'oceanwp', 'oceanwp_alpha', 'beaverbuilder', 'palette', 'version', 'spread', 'clamps', 'blocks', 'visual', 'clamp', 'luma', 'cols', 'rows', 'type', 'map') as $key) {
+foreach (array('customizer', 'block_size', 'block_axis', 'gutenberg', 'gutenberg_merge', 'gutenberg_force', 'css_vars', 'elementor', 'acf', 'suki_theme', 'fontpress', 'gp', 'gp_alpha', 'oceanwp', 'oceanwp_alpha', 'beaverbuilder', 'palette', 'version', 'next_index', 'spread', 'clamps', 'blocks', 'visual', 'clamp', 'luma', 'cols', 'rows', 'type', 'map') as $key) {
     delete_option("kt_color_grid_{$key}");
 }
 
